@@ -6,10 +6,12 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "rebuild": "electron-rebuild -f"
+    "rebuild": "electron-rebuild -f",
+    "get-ip": "node get-pi-ip.js"
   },
   "dependencies": {
     "@abandonware/bleno": "^0.5.1",
+    "@heyputer/puter.js": "^2.0.0",
     "dbus-next": "^0.10.2"
   },
   "devDependencies": {

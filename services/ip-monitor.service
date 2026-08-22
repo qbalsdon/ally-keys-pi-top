@@ -1,0 +1,27 @@
+[Unit]
+Description=ally-keys Pi IP Monitor
+Documentation=https://github.com/quintinbalsdon/ally-keys-pi-top
+# Wait until the network is genuinely up before checking the IP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi-desk
+WorkingDirectory=/home/pi-desk/ally-keys-pi-top
+
+# Load PUTER_AUTH_TOKEN from the project .env file
+EnvironmentFile=/home/pi-desk/ally-keys-pi-top/.env
+
+ExecStart=/home/pi-desk/ally-keys-pi-top/services/ip-monitor-run.sh
+
+# Restart on crash; give network a moment to settle after a reboot
+Restart=on-failure
+RestartSec=15
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ally-keys-ip-monitor
+
+[Install]
+WantedBy=multi-user.target
