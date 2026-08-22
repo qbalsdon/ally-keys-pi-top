@@ -6,4 +6,5 @@ export NVM_DIR="/home/pi-desk/.nvm"
 # shellcheck disable=SC1091
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 
-exec node /home/pi-desk/ally-keys-pi-top/services/ip-monitor.js
+cd /home/pi-desk/ally-keys-pi-top/services
+exec node ip-monitor.js

@@ -1,39 +1,45 @@
-'use strict';
 // ip-monitor.js — Raspberry Pi IP address watcher.
 // Runs as a systemd service. On boot and whenever the LAN IP changes,
 // writes the new IP to puter.js KV under the key "pi-top-puter-key".
 // deploy.sh reads this key to find the Pi without needing a static IP.
+//
+// Runs in local-only mode (logs IP but skips puter upload) when
+// PUTER_AUTH_TOKEN is absent — add it to .env and restart to enable upload.
 
-const { init } = require('@heyputer/puter.js');
-const os        = require('os');
-const fs        = require('fs');
+import os   from 'os';
+import fs   from 'fs';
 
-const PUTER_TOKEN      = process.env.PUTER_AUTH_TOKEN;
-const PUTER_KEY        = 'pi-top-puter-key';
-const STATE_FILE       = '/home/pi-desk/.ally-keys-pi-top-ip';
-const CHECK_INTERVAL   = 30 * 1000; // 30 s
+const PUTER_TOKEN    = process.env.PUTER_AUTH_TOKEN;
+const PUTER_KEY      = 'pi-top-puter-key';
+const STATE_FILE     = '/home/pi-desk/.ally-keys-pi-top-ip';
+const CHECK_INTERVAL = 30 * 1000; // 30 s
 
-if (!PUTER_TOKEN) {
-  console.error('[ip-monitor] PUTER_AUTH_TOKEN is not set — check .env');
-  process.exit(1);
+// ── Load puter (ESM, optional) ────────────────────────────────────────────────
+
+let puter = null;
+
+if (PUTER_TOKEN) {
+  try {
+    const { init } = await import('@heyputer/puter.js');
+    puter = init(PUTER_TOKEN);
+    console.log('[ip-monitor] puter.js loaded — will upload IP changes');
+  } catch (err) {
+    console.error('[ip-monitor] failed to load puter.js:', err.message);
+  }
+} else {
+  console.warn('[ip-monitor] PUTER_AUTH_TOKEN not set — local-only mode');
+  console.warn('[ip-monitor] Set PUTER_AUTH_TOKEN in .env and restart to enable upload');
 }
-
-const puter = init(PUTER_TOKEN);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Return the primary LAN IPv4 address (first non-loopback, non-virtual interface).
- */
 function getLanIp() {
   const ifaces = os.networkInterfaces();
-  const skip = /^(lo|docker|veth|virbr|br-)/;
+  const skip   = /^(lo|docker|veth|virbr|br-)/;
   for (const name of Object.keys(ifaces).sort()) {
     if (skip.test(name)) continue;
     for (const iface of ifaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        return iface.address;
-      }
+      if (iface.family === 'IPv4' && !iface.internal) return iface.address;
     }
   }
   return null;
@@ -46,6 +52,10 @@ function readStateIp() {
 
 function writeStateIp(ip) {
   fs.writeFileSync(STATE_FILE, ip, 'utf8');
+}
+
+function ts() {
+  return new Date().toISOString().replace('T', ' ').slice(0, 19);
 }
 
 // ── Core check ────────────────────────────────────────────────────────────────
@@ -67,26 +77,27 @@ async function checkAndUpload() {
   const from = lastIp || '(none)';
   console.log(`[ip-monitor] ${ts()} — IP changed: ${from} → ${currentIp}`);
 
-  try {
-    await puter.kv.set(PUTER_KEY, currentIp);
-    writeStateIp(currentIp);
-    console.log(`[ip-monitor] ${ts()} — uploaded to puter: "${PUTER_KEY}" = ${currentIp}`);
-  } catch (err) {
-    console.error(`[ip-monitor] ${ts()} — puter upload failed:`, err.message || err);
+  if (puter) {
+    try {
+      await puter.kv.set(PUTER_KEY, currentIp);
+      console.log(`[ip-monitor] ${ts()} — uploaded: "${PUTER_KEY}" = ${currentIp}`);
+    } catch (err) {
+      console.error(`[ip-monitor] ${ts()} — puter upload failed:`, err.message || err);
+    }
+  } else {
+    console.log(`[ip-monitor] ${ts()} — (local-only) current IP: ${currentIp}`);
   }
-}
 
-function ts() {
-  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+  writeStateIp(currentIp);
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
-console.log(`[ip-monitor] starting — will check every ${CHECK_INTERVAL / 1000}s`);
-checkAndUpload();
+console.log(`[ip-monitor] starting — checking every ${CHECK_INTERVAL / 1000}s`);
+await checkAndUpload();
 setInterval(checkAndUpload, CHECK_INTERVAL);
 
 process.on('SIGTERM', () => {
-  console.log('[ip-monitor] received SIGTERM — exiting');
+  console.log('[ip-monitor] SIGTERM — exiting');
   process.exit(0);
 });

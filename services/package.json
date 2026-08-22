@@ -1,0 +1,10 @@
+{
+  "name": "ally-keys-pi-top-service",
+  "version": "1.0.0",
+  "description": "IP monitor service — puter.js dependency only",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@heyputer/puter.js": "^2.0.0"
+  }
+}
