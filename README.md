@@ -20,12 +20,12 @@ The UI is the existing ally-keys peripheral page running inside Electron, with a
 
 ## Connecting to the Pi
 
-The Pi's IP address is stored in [puter.js](https://puter.com) KV under the key `pi-top-puter-key`. This is kept up to date automatically by the `ally-keys-ip-monitor` systemd service.
+The Pi's IP address is stored in [Upstash Redis](https://console.upstash.com) under the key `pi-top-ip`. It is kept up to date automatically by the `ally-keys-ip-monitor` systemd service.
 
 ### Resolve the current IP
 
 ```bash
-# requires PUTER_AUTH_TOKEN in .env
+# requires upstash_url and upstash_token in .env or environment
 node get-pi-ip.js
 # or via npm script:
 npm run get-ip
@@ -39,7 +39,7 @@ ssh pi-desk@$(node get-pi-ip.js)
 
 ### How the IP gets there
 
-The `services/ip-monitor.js` service runs on the Pi and polls the LAN IP every 30 seconds. When the IP changes (or on first boot), it calls `puter.kv.set('pi-top-puter-key', '<ip>')`. `deploy.sh` calls `get-pi-ip.js` automatically before connecting.
+`services/ip-monitor.js` runs on the Pi and polls the LAN IP every 30 seconds. When the IP changes (or on first boot), it calls the Upstash Redis REST API to set the `pi-top-ip` key. `deploy.sh` calls `get-pi-ip.js` automatically before connecting.
 
 ---
 
@@ -53,16 +53,16 @@ The `services/ip-monitor.js` service runs on the Pi and polls the LAN IP every 3
 
 ## Setup
 
-### 1. Get a puter.js API token
+### 1. Get Upstash credentials
 
-Go to [puter.com/dashboard#account](https://puter.com/dashboard#account) → **API Tokens** → **Create token**.
+Go to [console.upstash.com](https://console.upstash.com) → create a Redis database → copy **REST URL** and **REST Token**.
 
-### 2. Create `.env` (both on your Mac and on the Pi)
+### 2. Create `.env` on your Mac
 
 ```bash
 cp .env.example .env
-# edit .env and add:
-# PUTER_AUTH_TOKEN=your_token_here
+# edit .env — set upstash_url and upstash_token
+# OR put them in ~/.zshenv for shell-wide access
 ```
 
 ### 3. First deploy
@@ -71,14 +71,15 @@ cp .env.example .env
 ./deploy.sh
 ```
 
-`deploy.sh` calls `get-pi-ip.js` first to resolve the Pi's IP from puter. It falls back to `192.168.1.109` if puter is unreachable or the key hasn't been set yet.
+`deploy.sh` calls `get-pi-ip.js` first to resolve the Pi's IP from Upstash. It falls back to `192.168.1.109` if Upstash is unreachable or the key hasn't been set yet.
 
 ### 4. Install the IP monitor service on the Pi (once)
 
 ```bash
 ssh pi-desk@$(node get-pi-ip.js)
 # on the Pi:
-echo 'PUTER_AUTH_TOKEN=your_token' > ~/ally-keys-pi-top/.env
+echo 'upstash_url=https://your-db.upstash.io'       > ~/ally-keys-pi-top/.env
+echo 'upstash_token=your_token_here'                >> ~/ally-keys-pi-top/.env
 chmod 600 ~/ally-keys-pi-top/.env
 ~/ally-keys-pi-top/services/setup-service.sh
 ```
@@ -120,16 +121,16 @@ ally-keys-pi-top/
 │       ├── ipc-bridge.js      # Replaces Web Serial with IPC
 │       └── service-bar.js     # 5-chip status bar
 ├── services/
-│   ├── ip-monitor.js          # IP watcher — pushes to puter KV
+│   ├── ip-monitor.js          # IP watcher — pushes to Upstash Redis
 │   ├── ip-monitor-run.sh      # nvm wrapper for systemd
 │   ├── ip-monitor.service     # systemd unit file
 │   ├── setup-service.sh       # One-shot install script (run on Pi)
-│   └── package.json           # puter.js dep (ESM, service-only)
+│   └── package.json           # @upstash/redis dep (ESM, service-only)
 ├── main.js                    # Electron main process
 ├── preload.js                 # contextBridge API
-├── get-pi-ip.js               # Read Pi IP from puter KV (run on Mac)
-├── deploy.sh                  # rsync + install, resolves IP via puter
+├── get-pi-ip.js               # Read Pi IP from Upstash Redis (run on Mac)
+├── deploy.sh                  # rsync + install, resolves IP via Upstash
 ├── start.sh                   # Boot script (hciconfig up, launch Electron)
-├── .env.example               # Token setup instructions
-└── package.json               # electron + bleno + puter.js
+├── .env.example               # Credential setup template
+└── package.json               # electron + bleno deps
 ```

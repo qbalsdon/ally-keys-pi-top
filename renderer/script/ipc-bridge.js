@@ -5,6 +5,36 @@
 
 'use strict';
 
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+// Persist the user's preference in localStorage so it survives reboots.
+// The ally-keys colour system uses the .dark-mode class on <body>.
+
+const THEME_KEY = 'ak-theme'; // localStorage key
+
+function applyTheme(dark) {
+  document.body.classList.toggle('dark-mode', dark);
+}
+
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+}
+
+// Apply saved theme immediately — before any other script runs.
+// Falls back to 'dark' so the kiosk boots into dark mode by default.
+(function restoreTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  const dark = saved === null ? true : saved === 'dark';
+  // body may not exist yet if this script is in <head>; queue it.
+  if (document.body) {
+    applyTheme(dark);
+  } else {
+    document.addEventListener('DOMContentLoaded', () => applyTheme(dark), { once: true });
+  }
+})();
+
+// ── Device / connection state ─────────────────────────────────────────────────
+
 // Global device object referenced by keyboard.js and others
 const device = {
   connected: true,

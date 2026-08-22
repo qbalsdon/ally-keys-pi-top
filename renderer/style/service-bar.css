@@ -1,10 +1,10 @@
-/* Service bar — 5 BLE status chips pinned at the top of the Electron window */
+/* Service bar — BLE status groups pinned at the top of the Electron window */
 
 #service-bar {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 16px;
+  padding: 6px 16px;
   background: var(--background, #111);
   border-bottom: 1px solid var(--key-border, #333);
   overflow-x: auto;
@@ -15,34 +15,40 @@
 
 #service-bar::-webkit-scrollbar { display: none; }
 
-/* Groups: REC | HID */
-.sb-group {
+/* ── Group: fieldset rectangle with label in the border ─────────────────── */
+
+fieldset.sb-group {
+  /* Reset fieldset defaults */
+  margin: 0;
+  padding: 4px 10px 6px;
+  min-width: 0;
+
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+
+  border: 1px solid var(--key-border, #444);
+  border-radius: 8px;
 }
 
-.sb-group + .sb-group {
-  padding-left: 10px;
-  border-left: 1px solid var(--key-border, #444);
-}
-
-.sb-group-label {
-  font-size: 10px;
+legend.sb-group-label {
+  font-size: 9px;
   font-family: monospace;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-secondary, #666);
-  flex-shrink: 0;
+  padding: 0 5px;
+  /* sits in the border line via native <legend> behaviour */
 }
 
-/* Individual chips */
+/* ── Individual chip ─────────────────────────────────────────────────────── */
+
 .sb-chip {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 11px 5px 8px;
+  gap: 6px;
+  padding: 4px 10px 4px 7px;
   border-radius: 20px;
   border: 1px solid var(--key-border, #444);
   background: var(--key-background, #222);
@@ -54,7 +60,7 @@
   color: var(--text-secondary, #888);
   white-space: nowrap;
   flex-shrink: 0;
-  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  transition: border-color 0.18s, background 0.18s;
 }
 
 .sb-chip:hover:not(.sb-rec-chip):not(.sb-disconnected) {
@@ -62,7 +68,7 @@
   background: var(--key-active-background, #2a2a2a);
 }
 
-/* REC chip — always active, not clickable */
+/* REC chip */
 .sb-rec-chip {
   cursor: default;
 }
@@ -73,77 +79,64 @@
   color: #f0f0f0;
 }
 
-/* HID chip — forwarding active */
+/* HID forwarding active */
 .sb-chip.sb-fwd {
   border-color: #3B8FFF;
   background: rgba(59, 143, 255, 0.1);
   color: #dde8ff;
 }
 
-/* HID chip — disconnected */
+/* HID disconnected */
 .sb-chip.sb-disconnected {
   cursor: default;
-  opacity: 0.45;
+  opacity: 0.40;
 }
 
-/* Status dot */
-.sb-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+/* ── Status icon (SVG, fill="currentColor") ──────────────────────────────── */
+
+.sb-icon {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
+  /* Default: muted (disconnected) */
+  color: var(--text-secondary, #555);
 }
 
-.sb-dot.sb-off {
-  background: #444;
+/* Connected HID: green */
+.sb-chip:not(.sb-disconnected):not(.sb-rec-chip) .sb-icon {
+  color: #2EBD74;
+  animation: sb-glow-pulse 2.2s ease-in-out infinite;
 }
 
-.sb-dot.sb-on {
-  background: #2EBD74;
-  box-shadow: 0 0 6px rgba(46, 189, 116, 0.5);
+/* Connected REC: coral */
+.sb-rec-chip.sb-rec-active .sb-icon {
+  color: #FF5C72;
+  animation: sb-rec-pulse 1.4s ease-in-out infinite;
 }
 
-.sb-rec-chip .sb-dot.sb-on {
-  background: #FF5C72;
-  box-shadow: 0 0 6px rgba(255, 92, 114, 0.5);
+@keyframes sb-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(46, 189, 116, 0.4)); }
+  50%       { filter: drop-shadow(0 0 5px rgba(46, 189, 116, 0.9)); }
 }
 
-/* Pulse animations for connected dots */
-@keyframes ak-glow-pulse {
-  0%, 100% { box-shadow: 0 0 4px rgba(46, 189, 116, 0.4); }
-  50%       { box-shadow: 0 0 10px rgba(46, 189, 116, 0.8); }
-}
-
-@keyframes ak-rec-pulse {
-  0%, 100% { box-shadow: 0 0 4px rgba(255, 92, 114, 0.4); }
-  50%       { box-shadow: 0 0 12px rgba(255, 92, 114, 0.8); }
-}
-
-.sb-dot.sb-on {
-  animation: ak-glow-pulse 2.2s ease-in-out infinite;
-}
-
-.sb-rec-chip .sb-dot.sb-on {
-  animation: ak-rec-pulse 1.4s ease-in-out infinite;
+@keyframes sb-rec-pulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 92, 114, 0.4)); }
+  50%       { filter: drop-shadow(0 0 6px rgba(255, 92, 114, 0.9)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sb-dot.sb-on { animation: none; }
+  .sb-icon { animation: none !important; filter: none !important; }
 }
 
-/* Chip label and state text */
+/* ── Chip name ───────────────────────────────────────────────────────────── */
+
 .sb-chip-name {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 
-.sb-state {
-  font-size: 9px;
-  font-weight: 400;
-  opacity: 0.65;
-}
+/* ── FWD forwarding badge ────────────────────────────────────────────────── */
 
-/* FWD forwarding badge */
 .sb-fwd-badge {
   font-size: 9px;
   background: #3B8FFF;

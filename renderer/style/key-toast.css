@@ -1,0 +1,97 @@
+/* key-toast.css — stacking key-combination overlay */
+
+/* ── Container: full-screen transparent overlay ──────────────────────────── */
+
+#key-toast-container {
+  position: fixed;
+  inset: 0;          /* top/right/bottom/left: 0 */
+  z-index: 9000;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Individual toast item — always dead-centre ──────────────────────────── */
+
+.kt-item {
+  /* Pin to exact viewport centre */
+  position: absolute;
+  top:  50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+
+  /* Square-ish key cap */
+  min-width: 120px;
+  min-height: 120px;
+  padding: 14px 20px;
+  border-radius: 18px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  background: var(--key-background, #f7f7f7);
+  border: 2px solid var(--key-shadow, #7a7a7a);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.30),
+    0 2px  8px rgba(0, 0, 0, 0.20),
+    0 4px  0   var(--key-shadow, #7a7a7a);
+
+  opacity: 1;
+  transition:
+    transform 400ms ease-in,
+    opacity   400ms ease-in;
+}
+
+/* Exit: slide left + shrink to 60% + fade */
+.kt-item.kt-exit {
+  transform: translate(calc(-50% - 320px), -50%) scale(0.6);
+  opacity: 0;
+}
+
+/* ── Modifier row (small, at top of the square) ──────────────────────────── */
+
+.kt-mods {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.kt-mod {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--focus-element, #7f7f7f);
+  background: transparent;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--key-shadow, #7a7a7a);
+  white-space: nowrap;
+}
+
+/* ── Main key(s) — large, centred ────────────────────────────────────────── */
+
+.kt-main {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.kt-key {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--key, #3a3a3a);
+  white-space: nowrap;
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────────────── */
+/* The app's .dark-mode class on <body> updates the token values,            */
+/* so the square automatically recolours — no extra rules needed here.       */

@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="style/cheatsheet.css">
   <!-- Service bar styles (new) -->
   <link rel="stylesheet" href="style/service-bar.css">
+  <!-- Key-combination toast overlay -->
+  <link rel="stylesheet" href="style/key-toast.css">
 
   <!-- IPC bridge must load first — defines writeStream / device / log -->
   <script src="script/ipc-bridge.js"></script>
@@ -34,6 +36,8 @@
 
   <!-- Service bar (new) -->
   <script src="script/service-bar.js"></script>
+  <!-- Key-combination toast overlay (new) -->
+  <script src="script/key-toast.js"></script>
 </head>
 
 <body>
@@ -86,48 +90,46 @@
   <!-- ── BLE Service bar ────────────────────────────────────────────────── -->
   <div id="service-bar">
     <!-- Group 1: REC -->
-    <div class="sb-group">
-      <span class="sb-group-label">REC</span>
+    <fieldset class="sb-group">
+      <legend class="sb-group-label">REC</legend>
       <div class="sb-chip sb-rec-chip" id="sb-rec" title="BLE receiver — ally-keys.com connects here">
-        <span class="sb-dot sb-off"></span>
+        <span class="sb-icon"></span>
         <span class="sb-chip-name">ally-keys-REC</span>
-        <span class="sb-state">waiting</span>
       </div>
-    </div>
+    </fieldset>
 
     <!-- Group 2: HID devices -->
-    <div class="sb-group">
-      <span class="sb-group-label">HID</span>
+    <fieldset class="sb-group">
+      <legend class="sb-group-label">HID</legend>
       <div class="sb-chip sb-disconnected" id="sb-hid-1"
            onclick="toggleForward(1)" title="Tap to toggle forwarding to AK-HID-1">
-        <span class="sb-dot sb-off"></span>
+        <span class="sb-icon"></span>
         <span class="sb-chip-name">AK-HID-1</span>
-        <span class="sb-state">waiting</span>
         <span class="sb-fwd-badge" style="display:none">FWD</span>
       </div>
       <div class="sb-chip sb-disconnected" id="sb-hid-2"
            onclick="toggleForward(2)" title="Tap to toggle forwarding to AK-HID-2">
-        <span class="sb-dot sb-off"></span>
+        <span class="sb-icon"></span>
         <span class="sb-chip-name">AK-HID-2</span>
-        <span class="sb-state">waiting</span>
         <span class="sb-fwd-badge" style="display:none">FWD</span>
       </div>
       <div class="sb-chip sb-disconnected" id="sb-hid-3"
            onclick="toggleForward(3)" title="Tap to toggle forwarding to AK-HID-3">
-        <span class="sb-dot sb-off"></span>
+        <span class="sb-icon"></span>
         <span class="sb-chip-name">AK-HID-3</span>
-        <span class="sb-state">waiting</span>
         <span class="sb-fwd-badge" style="display:none">FWD</span>
       </div>
       <div class="sb-chip sb-disconnected" id="sb-hid-4"
            onclick="toggleForward(4)" title="Tap to toggle forwarding to AK-HID-4">
-        <span class="sb-dot sb-off"></span>
+        <span class="sb-icon"></span>
         <span class="sb-chip-name">AK-HID-4</span>
-        <span class="sb-state">waiting</span>
         <span class="sb-fwd-badge" style="display:none">FWD</span>
       </div>
-    </div>
+    </fieldset>
   </div>
+
+  <!-- ── Key-combination toast stack ──────────────────────────────────── -->
+  <div id="key-toast-container" aria-live="assertive" aria-atomic="true"></div>
 
   <!-- ── Dialogs / overlays ─────────────────────────────────────────────── -->
   <aside class="gone cookie-dialog" id="cookie-dialog">

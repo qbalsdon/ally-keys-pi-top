@@ -44,6 +44,12 @@ async function startBle() {
     }
   });
 
+  bleManager.on('keycode-received', (str) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('keycode-received', str);
+    }
+  });
+
   try {
     await bleManager.start();
   } catch (err) {

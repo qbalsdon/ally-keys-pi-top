@@ -20,6 +20,8 @@ export NVM_DIR="$HOME/.nvm"
 
 # ── Bring up Bluetooth adapters ──────────────────────────────────────────────
 echo "🔵  Bringing up Bluetooth adapters…"
+# Unblock any rfkill soft-block first (no password needed via sudoers.d/ally-keys-bt)
+sudo rfkill unblock bluetooth 2>/dev/null || true
 for i in 0 1 2 3 4; do
   if sudo hciconfig "hci${i}" up 2>/dev/null; then
     echo "    hci${i}  ✔"

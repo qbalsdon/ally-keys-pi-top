@@ -11,5 +11,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Subscribe to service state updates from the main process
   onServiceState: (callback) => {
     ipcRenderer.on('service-state', (_event, state) => callback(state));
+  },
+
+  // Subscribe to incoming keycode strings from the REC BLE service
+  onKeycodeReceived: (callback) => {
+    ipcRenderer.on('keycode-received', (_event, str) => callback(str));
   }
 });

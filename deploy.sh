@@ -9,12 +9,12 @@
 #   ssh-keygen -t ed25519 -C "ally-keys-pi"
 #   ssh-copy-id pi-desk@<pi-ip>
 #
-# Requires .env with PUTER_AUTH_TOKEN — see .env.example
+# Requires .env with upstash_url + upstash_token — see .env.example
 
 set -euo pipefail
 
-PI_USER="pi-user"
-FALLBACK_IP="192.168.1.109"   # used only if puter lookup fails
+PI_USER="pi-desk"
+FALLBACK_IP="192.168.1.109"   # used only if Upstash lookup fails
 SYNC_ONLY="${1:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -29,14 +29,14 @@ echo ""
 PI_IP=""
 
 if command -v node &>/dev/null && [ -f "${SCRIPT_DIR}/get-pi-ip.js" ]; then
-  echo "🔍  Looking up Pi IP from puter KV…"
+  echo "🔍  Looking up Pi IP from Upstash…"
   # node get-pi-ip.js prints the IP to stdout, exits non-zero on failure
   PUTER_IP="$(node "${SCRIPT_DIR}/get-pi-ip.js" 2>/dev/null || true)"
   if [ -n "${PUTER_IP}" ]; then
     PI_IP="${PUTER_IP}"
-    echo "    📡  Pi IP from puter: ${PI_IP}"
+    echo "    📡  Pi IP from Upstash: ${PI_IP}"
   else
-    echo "    ⚠   puter lookup failed — falling back to ${FALLBACK_IP}"
+    echo "    ⚠   Upstash lookup failed — falling back to ${FALLBACK_IP}"
     PI_IP="${FALLBACK_IP}"
   fi
 else
@@ -89,8 +89,23 @@ export NVM_DIR="\$HOME/.nvm"
 echo "  Node: \$(node --version)"
 echo "  npm:  \$(npm --version)"
 
-npm install --omit=dev
+# Install all deps (including devDeps) — electron itself is a devDep needed to run the app
+npm install
 npx electron-rebuild -f
+
+# Grant raw Bluetooth socket access to the Electron binary.
+# Required for bleno (REC + HID services) to open HCI sockets without root.
+# setcap breaks $ORIGIN RPATH, so Electron's bundled .so files must be
+# reachable via the system linker cache — symlink them and run ldconfig.
+ELECTRON_BIN="${PI_DIR}/node_modules/electron/dist/electron"
+echo "  Setting BLE capabilities on electron binary…"
+echo raspberry | sudo -S setcap cap_net_raw,cap_net_admin+eip "\${ELECTRON_BIN}" 2>/dev/null || \
+  sudo setcap cap_net_raw,cap_net_admin+eip "\${ELECTRON_BIN}"
+for so in "${PI_DIR}/node_modules/electron/dist"/*.so*; do
+  sudo ln -sf "\$so" "/usr/local/lib/\$(basename \$so)" 2>/dev/null || true
+done
+sudo ldconfig 2>/dev/null || true
+echo "  BLE capabilities set."
 
 echo ""
 echo "  Install complete."
