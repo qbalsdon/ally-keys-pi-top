@@ -1,0 +1,745 @@
+<title>ally-keys Pi Bridge</title>
+<style>
+:root {
+  --bg: #080C12;
+  --surface: #10171F;
+  --surface-2: #182028;
+  --surface-3: #1E2A38;
+  --border: #243040;
+  --border-bright: #2E4060;
+  --text-primary: #C8D8E8;
+  --text-secondary: #6A8090;
+  --text-dim: #3A5060;
+  --text-code: #7DD5A8;
+  --accent: #3B8FFF;
+  --accent-dim: rgba(59,143,255,0.12);
+  --accent-glow: rgba(59,143,255,0.3);
+  --connected: #2EBD74;
+  --connected-dim: rgba(46,189,116,0.12);
+  --connected-glow: rgba(46,189,116,0.25);
+  --rec: #FF5C72;
+  --rec-dim: rgba(255,92,114,0.12);
+  --rec-glow: rgba(255,92,114,0.25);
+  --warning: #F5A623;
+  --warning-dim: rgba(245,166,35,0.12);
+  --font-mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Fira Mono', monospace;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --radius: 6px;
+  --radius-lg: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* LAYOUT */
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* SERVICE BAR */
+.service-bar-section {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+}
+.service-bar {
+  display: flex; gap: 8px; align-items: center;
+  overflow-x: auto; scrollbar-width: none;
+}
+.service-bar::-webkit-scrollbar { display: none; }
+.bar-label {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-dim); flex-shrink: 0; margin-right: 2px;
+}
+.chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 12px 6px 9px; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; user-select: none; flex-shrink: 0;
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-secondary); white-space: nowrap;
+  transition: border-color .18s, background .18s, box-shadow .18s;
+}
+.chip:hover { border-color: var(--border-bright); background: var(--surface-2); }
+.chip.fwd {
+  border-color: var(--accent); background: var(--accent-dim);
+  color: var(--text-primary); box-shadow: 0 0 0 1px var(--accent-glow);
+}
+.chip.rec-chip {
+  border-color: var(--rec); background: var(--rec-dim);
+  color: var(--text-primary); cursor: default;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.dot.off { background: var(--text-dim); }
+.dot.on { background: var(--connected); box-shadow: 0 0 6px var(--connected-glow); }
+.dot.rec-dot { background: var(--rec); box-shadow: 0 0 6px var(--rec-glow); }
+@keyframes glow-pulse {
+  0%,100% { opacity:1; box-shadow: 0 0 4px var(--connected-glow); }
+  50% { opacity:.6; box-shadow: 0 0 10px var(--connected-glow); }
+}
+@keyframes rec-pulse {
+  0%,100% { opacity:1; box-shadow: 0 0 5px var(--rec-glow); }
+  50% { opacity:.7; box-shadow: 0 0 14px var(--rec-glow); }
+}
+.dot.on { animation: glow-pulse 2.2s ease-in-out infinite; }
+.dot.rec-dot { animation: rec-pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .dot.on, .dot.rec-dot { animation: none; }
+}
+.chip-name { font-weight: 700; }
+.chip-state { font-size: 10px; opacity: .65; }
+.fwd-badge {
+  font-size: 9px; background: var(--accent); color: #fff;
+  border-radius: 3px; padding: 1px 4px; font-weight: 800;
+  letter-spacing: .04em; margin-left: 1px;
+}
+
+/* HEADER */
+.doc-header { padding: 48px 0 40px; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+h1 {
+  font-family: var(--font-mono); font-size: 34px; font-weight: 700;
+  line-height: 1.15; letter-spacing: -.015em;
+  color: var(--text-primary); margin-bottom: 16px;
+  text-wrap: balance;
+}
+h1 span { color: var(--accent); }
+.subtitle { font-size: 15px; color: var(--text-secondary); max-width: 560px; }
+.meta-row { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 24px; }
+.meta-item { display: flex; flex-direction: column; gap: 3px; }
+.meta-k {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim);
+}
+.meta-v { font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); }
+
+/* SECTIONS */
+section { margin-bottom: 52px; }
+.section-label {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 10px;
+}
+h2 {
+  font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -.01em;
+  margin-bottom: 16px; text-wrap: balance;
+}
+h3 {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); margin: 22px 0 8px;
+}
+p { color: var(--text-secondary); margin-bottom: 12px; max-width: 640px; }
+
+/* ARCH DIAGRAM */
+.arch-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px 20px; margin: 20px 0;
+  overflow-x: auto;
+}
+.arch {
+  display: flex; align-items: center; gap: 0;
+  min-width: 640px;
+}
+.anode { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+.abox {
+  padding: 9px 15px; border-radius: var(--radius); border: 1px solid;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  text-align: center; min-width: 76px; line-height: 1.3;
+}
+.abox.web { border-color: var(--border-bright); background: var(--surface-2); color: var(--text-primary); }
+.abox.rec-box { border-color: var(--rec); background: var(--rec-dim); color: var(--rec); }
+.abox.pi { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-size: 13px; padding: 11px 18px; }
+.abox.hid { border-color: var(--connected); background: var(--connected-dim); color: var(--connected); font-size: 11px; min-width: 60px; padding: 7px 10px; }
+.abox.dev { border-color: var(--border); background: var(--surface-2); color: var(--text-secondary); font-size: 10px; min-width: 58px; padding: 6px 10px; }
+.acap { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); white-space: nowrap; }
+.aarrow {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 0 4px; min-width: 36px;
+}
+.aline {
+  width: 100%; height: 1px; position: relative;
+}
+.aline::before {
+  content: ''; position: absolute; left: 0; right: 10px;
+  height: 1px; background: var(--border-bright);
+}
+.aline::after {
+  content: '▶'; position: absolute; right: 0; top: -5px;
+  font-size: 8px; color: var(--border-bright);
+}
+.alabel { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); white-space: nowrap; }
+.asplit { display: flex; flex-direction: column; gap: 7px; }
+.asplit-row { display: flex; align-items: center; }
+.asplit-line {
+  width: 24px; height: 1px; background: var(--border-bright); position: relative; flex-shrink: 0;
+}
+.asplit-line::after {
+  content: '▶'; position: absolute; right: -5px; top: -5px;
+  font-size: 8px; color: var(--border-bright);
+}
+
+/* CALLOUT */
+.callout {
+  display: flex; gap: 12px; padding: 13px 15px;
+  border-radius: var(--radius); margin: 14px 0; border-left: 3px solid;
+}
+.callout.info { background: var(--accent-dim); border-color: var(--accent); }
+.callout.warn { background: var(--warning-dim); border-color: var(--warning); }
+.callout-icon { font-size: 14px; flex-shrink: 0; line-height: 1.65; }
+.callout-body { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+.callout-body strong { color: var(--text-primary); font-weight: 600; }
+
+/* HW LIST */
+.hw-list { display: flex; flex-direction: column; gap: 8px; }
+.hw-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+}
+.hw-qty {
+  font-family: var(--font-mono); font-size: 17px; font-weight: 700;
+  color: var(--text-dim); min-width: 24px; text-align: right;
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.hw-name { font-size: 14px; color: var(--text-primary); font-weight: 500; flex: 1; }
+.hw-note { font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono); }
+
+/* PROTOCOL */
+.proto-viz { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 14px 0; }
+.pt {
+  padding: 4px 8px; border-radius: 4px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+}
+.pt.hold { background: rgba(59,143,255,.18); color: #7BB8FF; }
+.pt.key  { background: var(--surface-3); color: var(--text-primary); }
+.pt.sep  { color: var(--text-dim); padding: 4px 2px; }
+.pt.end  { background: var(--rec-dim); color: var(--rec); }
+
+/* TECH TABLE */
+.table-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-dim); text-align: left;
+  padding: 9px 16px; border-bottom: 1px solid var(--border);
+  font-weight: 600; white-space: nowrap;
+}
+td { padding: 10px 16px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+td:first-child { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+
+/* CODE */
+code {
+  font-family: var(--font-mono); font-size: 12px; color: var(--text-code);
+  background: var(--surface-2); padding: 1px 5px; border-radius: 3px;
+}
+pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  overflow-x: auto; margin: 14px 0;
+}
+pre code { background: none; padding: 0; font-size: 12.5px; line-height: 1.75; }
+.c  { color: var(--accent); }         /* dir */
+.n  { color: var(--connected); }      /* new */
+.a  { color: var(--warning); }        /* adapted */
+.e  { color: var(--text-dim); }       /* existing */
+.cm { font-size: 10.5px; color: var(--text-dim); margin-left: 6px; }
+
+/* PHASES */
+.phases { display: flex; flex-direction: column; }
+.phase {
+  display: grid; grid-template-columns: 48px 1fr;
+  gap: 0 22px; position: relative;
+}
+.phase::before {
+  content: ''; position: absolute;
+  left: 20px; top: 44px; bottom: 0;
+  width: 1px; background: var(--border);
+}
+.phase:last-child::before { display: none; }
+.phase-rail { display: flex; flex-direction: column; align-items: center; padding-top: 4px; position: relative; z-index:1; }
+.phase-num {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  color: var(--text-dim); flex-shrink: 0;
+}
+.phase-body { padding-bottom: 36px; }
+.phase-title {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+  color: var(--text-primary); padding-top: 9px; margin-bottom: 5px;
+}
+.tag {
+  display: inline-block; font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 3px; margin-bottom: 12px;
+}
+.tag.pi   { background: var(--accent-dim); color: var(--accent); }
+.tag.ble  { background: var(--connected-dim); color: var(--connected); }
+.tag.ui   { background: var(--warning-dim); color: var(--warning); }
+.tag.web  { background: var(--rec-dim); color: var(--rec); }
+.tag.cfg  { background: rgba(140,120,255,.12); color: #A090FF; }
+.phase-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 13px; max-width: 600px; }
+
+/* DETAIL CARD */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px;
+}
+.card h4 {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 8px; letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.card ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.card li { font-size: 13px; color: var(--text-secondary); padding-left: 14px; position: relative; }
+.card li::before { content: '·'; position: absolute; left: 0; color: var(--text-dim); }
+
+/* DECISIONS */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 580px) { .grid2 { grid-template-columns: 1fr; } }
+.decision {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 15px;
+}
+.dq { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.da { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.da strong { color: var(--connected); }
+
+/* LEGEND */
+.legend { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; }
+.leg { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+</style>
+
+<!-- ── Sticky BLE service bar (live interactive mockup) ── -->
+<div class="service-bar-section">
+  <div class="wrap">
+    <div class="service-bar">
+      <span class="bar-label">Services</span>
+      <div class="chip rec-chip" title="REC — always active receiver">
+        <span class="dot rec-dot"></span>
+        <span class="chip-name">REC</span>
+        <span class="chip-state">connected</span>
+      </div>
+      <div class="chip fwd" onclick="toggleFwd(this,1)" title="Tap to toggle forwarding">
+        <span class="dot on"></span>
+        <span class="chip-name">HID 1</span>
+        <span class="chip-state">connected</span>
+        <span class="fwd-badge">FWD</span>
+      </div>
+      <div class="chip fwd" onclick="toggleFwd(this,2)" title="Tap to toggle forwarding">
+        <span class="dot on"></span>
+        <span class="chip-name">HID 2</span>
+        <span class="chip-state">connected</span>
+        <span class="fwd-badge">FWD</span>
+      </div>
+      <div class="chip" onclick="toggleFwd(this,3)" title="Not yet paired">
+        <span class="dot off"></span>
+        <span class="chip-name">HID 3</span>
+        <span class="chip-state">waiting</span>
+      </div>
+      <div class="chip" onclick="toggleFwd(this,4)" title="Not yet paired">
+        <span class="dot off"></span>
+        <span class="chip-name">HID 4</span>
+        <span class="chip-state">waiting</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ── Header ── -->
+<header class="doc-header">
+  <div class="eyebrow">Implementation Plan · ally-keys</div>
+  <h1>Raspberry Pi 4B<br><span>BLE Bridge</span></h1>
+  <p class="subtitle">An Electron app hosting 4 BLE HID keyboard services plus a BLE receiver (REC) — bridging ally-keys.com to up to 4 simultaneously paired accessibility devices.</p>
+  <div class="meta-row">
+    <div class="meta-item"><span class="meta-k">Target</span><span class="meta-v">Raspberry Pi 4B</span></div>
+    <div class="meta-item"><span class="meta-k">Runtime</span><span class="meta-v">Electron + BlueZ</span></div>
+    <div class="meta-item"><span class="meta-k">BLE Services</span><span class="meta-v">5 total (REC + HID 1–4)</span></div>
+    <div class="meta-item"><span class="meta-k">SSH</span><span class="meta-v">pi-desk@192.168.1.109</span></div>
+  </div>
+</header>
+
+<!-- ── Architecture ── -->
+<section>
+  <div class="section-label">System Architecture</div>
+  <h2>Signal flow</h2>
+  <p>ally-keys.com connects to REC via Web Bluetooth. The Electron main process receives the keycode command string and fans it out to whichever HID workers have forwarding enabled. Each HID service runs in its own process bound to a dedicated Bluetooth adapter.</p>
+
+  <div class="arch-wrap">
+    <div class="arch">
+      <div class="anode">
+        <div class="abox web">ally-keys<br>.com</div>
+        <div class="acap">Web Bluetooth</div>
+      </div>
+      <div class="aarrow"><div class="aline"></div><div class="alabel">BLE GATT</div></div>
+      <div class="anode">
+        <div class="abox rec-box">REC</div>
+        <div class="acap">NUS · hci0</div>
+      </div>
+      <div class="aarrow"><div class="aline"></div><div class="alabel">IPC</div></div>
+      <div class="anode">
+        <div class="abox pi">Electron<br>Main</div>
+        <div class="acap">Pi 4B · BlueZ</div>
+      </div>
+      <div class="aarrow"><div class="aline"></div><div class="alabel">fork IPC</div></div>
+      <div class="anode">
+        <div class="asplit">
+          <div class="abox hid">HID 1</div>
+          <div class="abox hid">HID 2</div>
+          <div class="abox hid">HID 3</div>
+          <div class="abox hid">HID 4</div>
+        </div>
+        <div class="acap">HOGP · hci1–4</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-left:8px;flex-shrink:0;">
+        <div class="asplit-row"><div class="asplit-line"></div><div class="abox dev" style="margin-left:6px;">Phone 1</div></div>
+        <div class="asplit-row"><div class="asplit-line"></div><div class="abox dev" style="margin-left:6px;">Phone 2</div></div>
+        <div class="asplit-row"><div class="asplit-line"></div><div class="abox dev" style="margin-left:6px;">Phone 3</div></div>
+        <div class="asplit-row"><div class="asplit-line"></div><div class="abox dev" style="margin-left:6px;">Phone 4</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚡</span>
+    <div class="callout-body"><strong>One adapter per HID service.</strong> bleno can only target one HCI device per process (set via <code>BLENO_HCI_DEVICE_ID</code>). The built-in adapter becomes <code>hci0</code> (REC). Three USB Bluetooth 5.0 dongles provide <code>hci1</code>–<code>hci3</code>. A fourth dongle gives <code>hci4</code> for HID 4 — or run HID 4 on a Pi with a single-device constraint if three simultaneous paired devices suffices.</div>
+  </div>
+</section>
+
+<!-- ── Hardware ── -->
+<section>
+  <div class="section-label">Bill of Materials</div>
+  <h2>Hardware required</h2>
+  <div class="hw-list">
+    <div class="hw-item">
+      <span class="hw-qty">1</span>
+      <span class="hw-name">Raspberry Pi 4B (2 GB+ RAM)</span>
+      <span class="hw-note">pi-desk@192.168.1.109</span>
+    </div>
+    <div class="hw-item">
+      <span class="hw-qty">3–4</span>
+      <span class="hw-name">USB Bluetooth 5.0 dongles</span>
+      <span class="hw-note">CSR8510 chipset preferred — solid BlueZ support · ~$8 ea</span>
+    </div>
+    <div class="hw-item">
+      <span class="hw-qty">1</span>
+      <span class="hw-name">HDMI display (or DSI touchscreen)</span>
+      <span class="hw-note">≥ 800 × 480 px</span>
+    </div>
+  </div>
+  <div class="callout info" style="margin-top:14px;">
+    <span class="callout-icon">ℹ</span>
+    <div class="callout-body">Built-in <code>hci0</code> → <strong>REC</strong>. USB dongles → <strong>HID 1–4</strong>. Keeping them separate means REC stays advertising while HID services cycle through pairing.</div>
+  </div>
+</section>
+
+<!-- ── Protocol ── -->
+<section>
+  <div class="section-label">Wire Protocol</div>
+  <h2>Command format (unchanged)</h2>
+  <p>REC receives the exact same ASCII command strings the ESP32 receives over serial. No protocol changes are needed — only <em>how</em> ally-keys.com connects changes (Web Serial → Web Bluetooth write to NUS RX characteristic).</p>
+
+  <h3>Example — Ctrl + Alt + Z</h3>
+  <div class="proto-viz">
+    <span class="pt hold">h0x00E0</span>
+    <span class="pt sep">/</span>
+    <span class="pt hold">h0x00E2</span>
+    <span class="pt sep">/</span>
+    <span class="pt key">0x001D</span>
+    <span class="pt sep">/</span>
+    <span class="pt end">r</span>
+  </div>
+
+  <div class="card">
+    <h4>Token reference</h4>
+    <ul>
+      <li><code>hXXXX</code> — hold modifier (Control, Alt, Shift…)</li>
+      <li><code>XXXX</code> — press key (4 or 6 hex chars per device capability)</li>
+      <li><code>/</code> alone — release all (clear buffer)</li>
+      <li><code>r</code> — terminate, send HID report</li>
+      <li><code>v</code> — version probe; REC replies with version string on TX</li>
+    </ul>
+  </div>
+
+  <h3>REC — Nordic UART Service (NUS)</h3>
+  <div class="card">
+    <h4>GATT UUIDs</h4>
+    <ul>
+      <li>Service: <code>6e400001-b5a3-f393-e0a9-e50e24dcca9e</code></li>
+      <li>RX (write from ally-keys.com): <code>6e400002-b5a3-f393-e0a9-e50e24dcca9e</code></li>
+      <li>TX (notify to ally-keys.com): <code>6e400003-b5a3-f393-e0a9-e50e24dcca9e</code></li>
+      <li>Advertised name: <code>ally-keys-REC</code></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── Tech Stack ── -->
+<section>
+  <div class="section-label">Technology</div>
+  <h2>Stack</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Package</th><th>Role</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td>electron</td><td>App shell</td><td>Node.js main process gets full BlueZ D-Bus / raw socket access; Chromium renders the existing ally-keys renderer with minimal changes</td></tr>
+        <tr><td>@abandonware/bleno</td><td>BLE peripheral</td><td>Targets a specific HCI device via <code>BLENO_HCI_DEVICE_ID</code>; defines custom GATT (NUS for REC, HOGP for HID 1–4)</td></tr>
+        <tr><td>electron-rebuild</td><td>Native build</td><td>Recompiles bleno's native bindings against Electron's bundled Node on ARM64</td></tr>
+        <tr><td>dbus-next</td><td>BlueZ agent</td><td>Registers a NoInputNoOutput pairing agent so HID devices auto-accept bond requests without user interaction</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Phases ── -->
+<section>
+  <div class="section-label">Implementation</div>
+  <h2>Phases</h2>
+  <div class="phases">
+
+    <div class="phase">
+      <div class="phase-rail"><div class="phase-num">1</div></div>
+      <div class="phase-body">
+        <div class="phase-title">Electron scaffold + kiosk mode</div>
+        <span class="tag pi">Electron · Pi</span>
+        <p class="phase-desc">Bootstrap the Electron project on the Pi, confirm bleno compiles on ARM64, set up fullscreen kiosk boot.</p>
+        <div class="card"><h4>Tasks</h4><ul>
+          <li>SSH in: <code>ssh pi-desk@192.168.1.109</code> (pw: raspberry)</li>
+          <li>Install Node 18 LTS via <code>nvm</code> on the Pi (ARM64 binary)</li>
+          <li><code>npm i electron @abandonware/bleno electron-rebuild dbus-next</code></li>
+          <li><code>npx electron-rebuild</code> — compiles bleno native bindings</li>
+          <li>Electron flags: <code>--kiosk --no-sandbox --disable-infobars</code></li>
+          <li>Autostart via <code>~/.config/lxsession/LXDE-pi/autostart</code></li>
+          <li>Disable blanking: <code>xset s off &amp;&amp; xset -dpms</code></li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-rail"><div class="phase-num">2</div></div>
+      <div class="phase-body">
+        <div class="phase-title">BLE HID services (HID 1–4)</div>
+        <span class="tag ble">BLE · HOGP</span>
+        <p class="phase-desc">Implement HID over GATT Profile for keyboard emulation. Each of the 4 services is an isolated child process bound to its own adapter.</p>
+        <div class="card"><h4>HOGP GATT profile per worker</h4><ul>
+          <li>HID Service <code>0x1812</code></li>
+          <li>Report Map <code>0x2A4B</code> — standard USB keyboard descriptor</li>
+          <li>Input Report <code>0x2A4D</code> — 8 bytes (modifier + 6 keycodes)</li>
+          <li>HID Information <code>0x2A4A</code> — <code>[0x01,0x11,0x00,0x03]</code></li>
+          <li>HID Control Point <code>0x2A4C</code> — write-only</li>
+          <li>Battery Service <code>0x180F</code> — static 100%</li>
+          <li>Advertised names: <code>ally-keys-1</code> through <code>ally-keys-4</code></li>
+        </ul></div>
+        <div class="card"><h4>Process model</h4><ul>
+          <li>Main spawns 4 workers via <code>child_process.fork('ble/hid-worker.js')</code></li>
+          <li>Each worker env: <code>BLENO_HCI_DEVICE_ID=1</code> … <code>=4</code></li>
+          <li>IPC message from main → worker: <code>{ type:'report', data:Buffer&lt;8&gt; }</code></li>
+          <li>Worker re-advertises automatically on disconnect</li>
+          <li>Main tracks each worker's <code>connected</code> state and notifies renderer</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-rail"><div class="phase-num">3</div></div>
+      <div class="phase-body">
+        <div class="phase-title">BLE REC receiver service</div>
+        <span class="tag ble">BLE · NUS</span>
+        <p class="phase-desc">NUS GATT service on <code>hci0</code>. Parses ally-keys wire protocol, converts to HID reports, dispatches to forwarding-enabled HID workers.</p>
+        <div class="card"><h4>Tasks</h4><ul>
+          <li>Implement NUS with bleno on <code>BLENO_HCI_DEVICE_ID=0</code></li>
+          <li>Port <code>keymap.js</code> → <code>ble/protocol-parser.js</code> (same <code>keyMap</code> + <code>toKeyCode()</code>, Node.js module)</li>
+          <li>Parser output → 8-byte HID report builder</li>
+          <li>Dispatch report to each worker whose forwarding flag is <code>true</code></li>
+          <li>TX notify: version string on <code>v</code> probe; <code>"1"</code> if no HID connected</li>
+        </ul></div>
+        <div class="callout info">
+          <span class="callout-icon">ℹ</span>
+          <div class="callout-body"><code>protocol-parser.js</code> is a direct port of the existing <code>keymap.js</code> — same map, same logic, zero protocol changes. ally-keys.com sends identical strings whether talking to the ESP32 or to REC.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-rail"><div class="phase-num">4</div></div>
+      <div class="phase-body">
+        <div class="phase-title">Electron UI — port + service bar</div>
+        <span class="tag ui">Renderer</span>
+        <p class="phase-desc">Port the existing peripheral page into the Electron renderer. Replace the Web Serial transport with an IPC bridge. Add the 5-chip service bar at the top.</p>
+        <div class="card"><h4>Reused verbatim</h4><ul>
+          <li><code>keymap.js</code>, <code>keyboard.js</code>, <code>qwerty_keyboard.js</code>, <code>macropad_keyboard.js</code></li>
+          <li><code>livetyping.js</code>, <code>switch_macro.js</code>, <code>dictionary.js</code></li>
+          <li><code>cheatsheet.js</code>, <code>shortcuts.js</code></li>
+          <li>All CSS files (<code>colours.css</code>, <code>main.css</code>, <code>keyboard.css</code>)</li>
+        </ul></div>
+        <div class="card"><h4>New / replaced</h4><ul>
+          <li><code>ipc-bridge.js</code> replaces <code>start.js</code> — <code>writeStream()</code> calls <code>window.electronAPI.sendKeycode(str)</code> instead of serial writer</li>
+          <li><code>service-bar.js</code> — renders 5 chips; listens for <code>onServiceState</code> IPC events; calls <code>electronAPI.toggleForward(id)</code> on chip tap</li>
+          <li><code>preload.js</code> — contextBridge exposes <code>sendKeycode</code>, <code>toggleForward</code>, <code>onServiceState</code></li>
+          <li><code>service-bar.css</code> — chip styles, pulse animation, FWD badge</li>
+          <li>Remove serial connect button and USB tutorial overlay — the app is always internally connected</li>
+        </ul></div>
+        <div class="card"><h4>Service bar behaviour</h4><ul>
+          <li><strong>REC chip</strong>: always shown connected when NUS is advertising; not tappable</li>
+          <li><strong>HID 1–4 chips</strong>: show live connection state pushed from main via IPC; tapping a <em>connected</em> chip toggles forwarding on/off (FWD badge appears/disappears); tapping a <em>disconnected</em> chip is a no-op</li>
+          <li>Forwarding state stored in main process and survives renderer reloads</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-rail"><div class="phase-num">5</div></div>
+      <div class="phase-body">
+        <div class="phase-title">ally-keys.com — Web Bluetooth path</div>
+        <span class="tag web">ally-keys.com</span>
+        <p class="phase-desc">Add a BLE connection option to the existing ally-keys.com page. The Web Serial path stays intact; a second "Connect via BLE" entry scans for <code>ally-keys-REC</code> and writes to its NUS RX characteristic.</p>
+        <div class="card"><h4>Changes to start.js</h4><ul>
+          <li>Add <code>attemptBLEConnection()</code> — <code>navigator.bluetooth.requestDevice({ filters:[{name:'ally-keys-REC'}], optionalServices:[NUS_UUID] })</code></li>
+          <li>Write command strings to RX characteristic instead of the serial writer</li>
+          <li>Subscribe to TX characteristic notifications for responses</li>
+          <li><code>writeStream()</code> API stays identical — only the transport is swapped</li>
+          <li>Show BLE option only when <code>'bluetooth' in navigator</code> (Chrome/Edge desktop + Chrome Android)</li>
+          <li>Add a BLE icon button beside the existing USB plug icon in the navbar</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-rail"><div class="phase-num">6</div></div>
+      <div class="phase-body">
+        <div class="phase-title">Pi system configuration</div>
+        <span class="tag cfg">System · BlueZ</span>
+        <p class="phase-desc">Configure BlueZ for multiple adapters, auto-accept pairing, discoverable timeouts, and the Electron autostart chain.</p>
+        <div class="card"><h4>BlueZ</h4><ul>
+          <li>Confirm all adapters: <code>hciconfig -a</code></li>
+          <li><code>/etc/bluetooth/main.conf</code>: <code>DiscoverableTimeout=0</code>, <code>FastConnectable=true</code>, <code>Privacy=off</code></li>
+          <li>Auto-accept pairing: register <code>NoInputNoOutput</code> agent via <code>dbus-next</code> in main process</li>
+          <li>Mark each adapter discoverable: <code>bluetoothctl select hciN &amp;&amp; discoverable on</code></li>
+          <li>Grant Node <code>CAP_NET_ADMIN</code> + <code>CAP_NET_RAW</code> via <code>setcap</code> on the Electron binary (avoids running as root)</li>
+        </ul></div>
+        <div class="card"><h4>Autostart</h4><ul>
+          <li><code>start.sh</code>: brings up all adapters (<code>hciconfig hciN up</code>), sets <code>DISPLAY=:0</code>, launches Electron</li>
+          <li>Entry in <code>~/.config/lxsession/LXDE-pi/autostart</code>: <code>@/home/pi-desk/ally-keys-pi/start.sh</code></li>
+        </ul></div>
+      </div>
+    </div>
+
+  </div><!-- /phases -->
+</section>
+
+<!-- ── File Tree ── -->
+<section>
+  <div class="section-label">Project Structure</div>
+  <h2>File tree</h2>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:var(--connected)"></div><span style="color:var(--connected)">new</span></div>
+    <div class="leg"><div class="leg-dot" style="background:var(--warning)"></div><span style="color:var(--warning)">adapted from ally-keys</span></div>
+    <div class="leg"><div class="leg-dot" style="background:var(--text-dim)"></div><span style="color:var(--text-dim)">copied verbatim</span></div>
+  </div>
+  <pre><code><span class="c">ally-keys-pi/</span>
+├── <span class="n">package.json</span>               <span class="cm">// electron, @abandonware/bleno, dbus-next</span>
+├── <span class="n">main.js</span>                    <span class="cm">// BrowserWindow, spawns BLE workers, IPC router</span>
+├── <span class="n">preload.js</span>                 <span class="cm">// contextBridge: sendKeycode / toggleForward / onServiceState</span>
+├── <span class="n">start.sh</span>                   <span class="cm">// hciconfig up × N, DISPLAY=:0, launch Electron</span>
+│
+├── <span class="c">ble/</span>
+│   ├── <span class="n">ble-manager.js</span>             <span class="cm">// orchestrates 5 services, holds forwarding flags</span>
+│   ├── <span class="n">rec-service.js</span>             <span class="cm">// NUS GATT on hci0; parse → dispatch</span>
+│   ├── <span class="n">hid-worker.js</span>              <span class="cm">// HOGP keyboard; run ×4 with BLENO_HCI_DEVICE_ID=1..4</span>
+│   ├── <span class="n">hid-descriptor.js</span>          <span class="cm">// USB keyboard HID report descriptor</span>
+│   └── <span class="a">protocol-parser.js</span>         <span class="cm">// ported keymap.js — toKeyCode() + keyMap in Node</span>
+│
+└── <span class="c">renderer/</span>
+    ├── <span class="a">index.html</span>                 <span class="cm">// peripheral.html — serial UI removed, service bar added</span>
+    ├── <span class="c">style/</span>
+    │   ├── <span class="e">colours.css</span>
+    │   ├── <span class="e">main.css</span>
+    │   ├── <span class="e">keyboard.css</span>
+    │   └── <span class="n">service-bar.css</span>            <span class="cm">// chip styles, pulse dot, FWD badge</span>
+    └── <span class="c">script/</span>
+        ├── <span class="n">ipc-bridge.js</span>              <span class="cm">// replaces start.js; writeStream → electronAPI</span>
+        ├── <span class="n">service-bar.js</span>             <span class="cm">// renders + updates 5 chips via IPC events</span>
+        ├── <span class="e">keymap.js</span>
+        ├── <span class="e">keyboard.js</span>
+        ├── <span class="e">qwerty_keyboard.js</span>
+        ├── <span class="e">macropad_keyboard.js</span>
+        ├── <span class="e">livetyping.js</span>
+        ├── <span class="e">switch_macro.js</span>
+        ├── <span class="e">dictionary.js</span>
+        ├── <span class="e">cheatsheet.js</span>
+        └── <span class="e">shortcuts.js</span></code></pre>
+</section>
+
+<!-- ── Decisions ── -->
+<section>
+  <div class="section-label">Design Decisions</div>
+  <h2>Key choices</h2>
+  <div class="grid2">
+    <div class="decision">
+      <div class="dq">Why NUS for REC?</div>
+      <div class="da">NUS is the de-facto BLE UART bridge. Web Bluetooth supports it without flags, and the ally-keys wire protocol is ASCII text — it maps directly to a byte-stream characteristic. <strong>No protocol redesign needed.</strong></div>
+    </div>
+    <div class="decision">
+      <div class="dq">Why fork per HID?</div>
+      <div class="da">bleno targets one HCI adapter per process via env var. <strong>4 forks × 1 adapter = 4 independent HID devices</strong>, each with its own bonding state and advertising lifecycle.</div>
+    </div>
+    <div class="decision">
+      <div class="dq">Why reuse the renderer?</div>
+      <div class="da">The peripheral page is a complete, tested keyboard UI. Porting to Electron requires replacing only the transport layer. <strong>Months of UI work reused by changing two files.</strong></div>
+    </div>
+    <div class="decision">
+      <div class="dq">REC not toggleable?</div>
+      <div class="da">REC is the inbound receiver — disabling it would cut all input. <strong>Only HID 1–4 are toggled</strong>; a disconnected HID chip is shown but its tap is a no-op.</div>
+    </div>
+    <div class="decision">
+      <div class="dq">Auto-accept pairing?</div>
+      <div class="da">A <code>NoInputNoOutput</code> BlueZ agent via <code>dbus-next</code> handles HID bond requests silently. <strong>Bonding is persisted</strong> by BlueZ — phones reconnect automatically on boot.</div>
+    </div>
+    <div class="decision">
+      <div class="dq">Web Bluetooth browser support?</div>
+      <div class="da">Chrome/Edge desktop + Chrome Android. iOS/Safari excluded (no Web Bluetooth). <strong>The Web Serial path stays</strong> for non-BLE use; both coexist in the ally-keys.com navbar.</div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<script>
+function toggleFwd(chip, id) {
+  const dot = chip.querySelector('.dot');
+  if (dot.classList.contains('off')) return;
+  const active = chip.classList.toggle('fwd');
+  let badge = chip.querySelector('.fwd-badge');
+  if (active && !badge) {
+    badge = document.createElement('span');
+    badge.className = 'fwd-badge';
+    badge.textContent = 'FWD';
+    chip.appendChild(badge);
+  } else if (!active && badge) {
+    badge.remove();
+  }
+}
+</script>
