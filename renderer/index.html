@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>ally-keys Pi</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Styles (verbatim from ally-keys) -->
+  <link rel="stylesheet" href="style/colours.css">
+  <link rel="stylesheet" href="style/main.css">
+  <link rel="stylesheet" href="style/keyboard.css">
+  <link rel="stylesheet" href="style/switch_macro.css">
+  <link rel="stylesheet" href="style/cheatsheet.css">
+  <!-- Service bar styles (new) -->
+  <link rel="stylesheet" href="style/service-bar.css">
+
+  <!-- IPC bridge must load first — defines writeStream / device / log -->
+  <script src="script/ipc-bridge.js"></script>
+
+  <!-- Constants & data (verbatim) -->
+  <script src="script/debugData.js"></script>
+  <script src="script/shortcuts.js"></script>
+  <script src="script/keymap.js"></script>
+  <script src="script/cheatsheet.js"></script>
+  <script src="script/animation.js"></script>
+
+  <!-- Keyboard scripts (verbatim) -->
+  <script src="script/qwerty_keyboard.js"></script>
+  <script src="script/macropad_keyboard.js"></script>
+  <script src="script/keyboard.js"></script>
+  <script src="script/livetyping.js"></script>
+  <script src="script/switch_macro.js"></script>
+  <script src="script/dictionary.js"></script>
+
+  <!-- Service bar (new) -->
+  <script src="script/service-bar.js"></script>
+</head>
+
+<body>
+
+  <!-- ── Navigation (adapted: connect button removed) ──────────────────── -->
+  <nav>
+    <ul class="menu">
+      <li>
+        <a onclick="toggleDarkMode();">
+          <img class="inverted" src="image/colour_mode.svg"
+               style="height:20px" alt="toggle light/dark mode">
+        </a>
+      </li>
+      <li><a href="javascript:void(0)" id="menu-home">ally-keys Pi</a></li>
+      <li>
+        <a href="javascript:void(0)" id="menu-live-typing" class="gone"
+           onclick="startLiveTyping();">Live Typing</a>
+      </li>
+      <li class="dropdown">
+        <a href="javascript:void(0)" class="dropbtn gone" id="menu-macro-pads">Macro pads</a>
+        <div class="dropdown-content" id="menu_macropad_list"></div>
+      </li>
+      <li>
+        <a href="javascript:void(0)" onclick="toggleCheatsheet()"
+           id="menu-cheatsheet">Cheatsheet</a>
+      </li>
+      <li class="dropdown">
+        <a href="javascript:void(0)" class="dropbtn">Tools</a>
+        <div class="dropdown-content">
+          <a class="visible-when-connected"
+             onclick="toggleElement('dictionary', false);">My Dictionary</a>
+          <a href="javascript:void(0)">--- Animations ---</a>
+          <a onclick="toggleAnimations();" id="menu_reduce_motion">Reduce motion: ___</a>
+          <a onclick="showAnimationWindow();">Show gestures</a>
+          <a href="javascript:void(0)">--- Miscellaneous ---</a>
+          <a onclick="toggleElement('licences', false);">Licences</a>
+        </div>
+      </li>
+      <li class="dropdown" id="menu-debug" style="display: none;">
+        <a href="javascript:void(0)" class="dropbtn">Debug</a>
+        <div class="dropdown-content">
+          <a onclick="toggleElement('raw-input', false);">Raw input</a>
+          <a onclick="toggleElement('debug-log', false);">Logs</a>
+          <a onclick="document.body.classList.toggle('debug-mode');">Layout borders</a>
+        </div>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ── BLE Service bar ────────────────────────────────────────────────── -->
+  <div id="service-bar">
+    <!-- Group 1: REC -->
+    <div class="sb-group">
+      <span class="sb-group-label">REC</span>
+      <div class="sb-chip sb-rec-chip" id="sb-rec" title="BLE receiver — ally-keys.com connects here">
+        <span class="sb-dot sb-off"></span>
+        <span class="sb-chip-name">ally-keys-REC</span>
+        <span class="sb-state">waiting</span>
+      </div>
+    </div>
+
+    <!-- Group 2: HID devices -->
+    <div class="sb-group">
+      <span class="sb-group-label">HID</span>
+      <div class="sb-chip sb-disconnected" id="sb-hid-1"
+           onclick="toggleForward(1)" title="Tap to toggle forwarding to AK-HID-1">
+        <span class="sb-dot sb-off"></span>
+        <span class="sb-chip-name">AK-HID-1</span>
+        <span class="sb-state">waiting</span>
+        <span class="sb-fwd-badge" style="display:none">FWD</span>
+      </div>
+      <div class="sb-chip sb-disconnected" id="sb-hid-2"
+           onclick="toggleForward(2)" title="Tap to toggle forwarding to AK-HID-2">
+        <span class="sb-dot sb-off"></span>
+        <span class="sb-chip-name">AK-HID-2</span>
+        <span class="sb-state">waiting</span>
+        <span class="sb-fwd-badge" style="display:none">FWD</span>
+      </div>
+      <div class="sb-chip sb-disconnected" id="sb-hid-3"
+           onclick="toggleForward(3)" title="Tap to toggle forwarding to AK-HID-3">
+        <span class="sb-dot sb-off"></span>
+        <span class="sb-chip-name">AK-HID-3</span>
+        <span class="sb-state">waiting</span>
+        <span class="sb-fwd-badge" style="display:none">FWD</span>
+      </div>
+      <div class="sb-chip sb-disconnected" id="sb-hid-4"
+           onclick="toggleForward(4)" title="Tap to toggle forwarding to AK-HID-4">
+        <span class="sb-dot sb-off"></span>
+        <span class="sb-chip-name">AK-HID-4</span>
+        <span class="sb-state">waiting</span>
+        <span class="sb-fwd-badge" style="display:none">FWD</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Dialogs / overlays ─────────────────────────────────────────────── -->
+  <aside class="gone cookie-dialog" id="cookie-dialog">
+    <h1>Cookie policy</h1>
+    <p>This page uses anonymous cookies<br>for local settings only.<br>They are not tracked.</p>
+    <input type="button" value="Dismiss" onclick="dismissCookies()">
+  </aside>
+
+  <article id="cheatsheet" class="gone"></article>
+
+  <section id="debug-tools">
+    <div id="raw-input" class="gone">
+      <label for="raw_input">Raw keycode</label>
+      <input type="text" id="raw_input">
+      <input type="button" value="Submit"
+             onclick="writeStream(document.getElementById('raw_input').value)">
+    </div>
+    <div id="debug-log" class="gone">
+      <label for="logFilter">Filter</label>
+      <input type="text" id="logFilter" onkeyup="log('[REFRESH]')">
+      <input type="button" value="Copy" onclick="copyLog();"><br><br>
+      <div id="log">Connecting…</div>
+    </div>
+  </section>
+
+  <section id="liveTyping-modal" class="upper-dialog gone">
+    <span class="close" onclick="endLiveTyping();" tabindex="0"
+          role="button" aria-pressed="false"></span>
+    <h2>Live Typing (experimental)</h2>
+    <p>While this dialog is open, the page will forward all key events to the active HID devices.</p>
+    <div class="modal-chip-container">
+      <div id="live-shift" class="modal-chip">SHIFT</div>
+      <div id="live-ctrl"  class="modal-chip">CTRL</div>
+      <div id="live-alt"   class="modal-chip">ALT</div>
+    </div>
+    <p id="current-key">&nbsp;</p>
+  </section>
+
+  <!-- ── Main keyboard UI (verbatim structure from peripheral.html) ─────── -->
+  <div>
+    <div class="keyboard-container hidden-on-cheatsheet">
+      <div class="vertical-strip-macro" id="vertical-left">
+        <div class="keyboard-decor gone" id="iphone-basic"></div>
+        <div class="keyboard-decor gone" id="android-basic"></div>
+      </div>
+
+      <div class="central-column-keyboard-container">
+        <section class="keyboard-decor apple-keyboard gone" id="prep-type-keyboard">
+          <div class="header">
+            <h1 class="keyboard">
+              <span class="header-line">
+                <label for="prep-type-input">Text to type</label>
+              </span>
+              <span>
+                <input type="checkbox" id="clear" tabindex="1000">
+                <label for="clear"> Clear</label>
+              </span>
+            </h1>
+          </div>
+          <div class="keyboard" id="base-keyboard">
+            <div class="keyboard-row bottom-row spaced">
+              <input type="text"   id="prep-type-input"   class="prep-type-input bigger">
+              <input type="button" id="prep-type-submit"  value="Type" class="bigger"
+                     onclick="typeText()">
+            </div>
+          </div>
+        </section>
+
+        <section class="keyboard-decor apple-keyboard gone" id="switch-keyboard"></section>
+        <section class="keyboard-decor horizontal-macro-keyboard macro-keyboard gone"
+                 id="voiceover-keyboard"></section>
+        <section class="keyboard-decor horizontal-macro-keyboard macro-keyboard gone"
+                 id="talkback-keyboard"></section>
+        <article class="keyboard gone" id="main-keyboard"></article>
+      </div>
+
+      <div class="vertical-strip-macro" id="vertical-right">
+        <section class="keyboard-decor gone" id="alt-func"></section>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

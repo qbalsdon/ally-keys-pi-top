@@ -1,0 +1,156 @@
+/* Service bar — 5 BLE status chips pinned at the top of the Electron window */
+
+#service-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--background, #111);
+  border-bottom: 1px solid var(--key-border, #333);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  z-index: 200;
+}
+
+#service-bar::-webkit-scrollbar { display: none; }
+
+/* Groups: REC | HID */
+.sb-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sb-group + .sb-group {
+  padding-left: 10px;
+  border-left: 1px solid var(--key-border, #444);
+}
+
+.sb-group-label {
+  font-size: 10px;
+  font-family: monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #666);
+  flex-shrink: 0;
+}
+
+/* Individual chips */
+.sb-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px 5px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--key-border, #444);
+  background: var(--key-background, #222);
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.sb-chip:hover:not(.sb-rec-chip):not(.sb-disconnected) {
+  border-color: var(--key-focus-border, #555);
+  background: var(--key-active-background, #2a2a2a);
+}
+
+/* REC chip — always active, not clickable */
+.sb-rec-chip {
+  cursor: default;
+}
+
+.sb-rec-chip.sb-rec-active {
+  border-color: #FF5C72;
+  background: rgba(255, 92, 114, 0.1);
+  color: #f0f0f0;
+}
+
+/* HID chip — forwarding active */
+.sb-chip.sb-fwd {
+  border-color: #3B8FFF;
+  background: rgba(59, 143, 255, 0.1);
+  color: #dde8ff;
+}
+
+/* HID chip — disconnected */
+.sb-chip.sb-disconnected {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* Status dot */
+.sb-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sb-dot.sb-off {
+  background: #444;
+}
+
+.sb-dot.sb-on {
+  background: #2EBD74;
+  box-shadow: 0 0 6px rgba(46, 189, 116, 0.5);
+}
+
+.sb-rec-chip .sb-dot.sb-on {
+  background: #FF5C72;
+  box-shadow: 0 0 6px rgba(255, 92, 114, 0.5);
+}
+
+/* Pulse animations for connected dots */
+@keyframes ak-glow-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(46, 189, 116, 0.4); }
+  50%       { box-shadow: 0 0 10px rgba(46, 189, 116, 0.8); }
+}
+
+@keyframes ak-rec-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(255, 92, 114, 0.4); }
+  50%       { box-shadow: 0 0 12px rgba(255, 92, 114, 0.8); }
+}
+
+.sb-dot.sb-on {
+  animation: ak-glow-pulse 2.2s ease-in-out infinite;
+}
+
+.sb-rec-chip .sb-dot.sb-on {
+  animation: ak-rec-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-dot.sb-on { animation: none; }
+}
+
+/* Chip label and state text */
+.sb-chip-name {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sb-state {
+  font-size: 9px;
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+/* FWD forwarding badge */
+.sb-fwd-badge {
+  font-size: 9px;
+  background: #3B8FFF;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin-left: 1px;
+}

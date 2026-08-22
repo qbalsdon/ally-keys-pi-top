@@ -1,0 +1,377 @@
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: sans-serif;
+}
+
+/* Navigational tabs */
+nav>ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+nav>ul>li {
+  float: left;
+}
+
+nav>ul>li a,
+.dropbtn {
+  display: inline-block;
+  color: var(--foreground);
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: underline;
+}
+
+nav>ul>li a:hover,
+.dropdown:hover .dropbtn {
+  background-color: var(--foreground);
+  color: var(--background);
+  text-decoration: none;
+}
+
+nav>ul>li a:hover img {
+  filter: invert(var(--invert-2));
+}
+
+li.dropdown {
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--background-modal);
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  color: var(--foreground);
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.dropdown-content a:hover {
+  color: var(--foreground);
+  background-color: var(--background-modal-hover);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Setup dialog */
+.setup {
+  border: 5px solid;
+  position: absolute;
+  background-color: var(--background);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 5px 5px var(--background-modal-hover);
+}
+
+ol.steps li {
+  vertical-align: top;
+  font-weight: 800;
+}
+
+/* Image */
+.image-btn {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.image-btn img {
+  display: block;
+  /* to remove extra space below image */
+}
+
+/* tabs */
+.tab {
+  display: inline-block;
+  color: var(--foreground);
+  background-color: var(--background);
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: underline;
+  border: none;
+}
+
+.tab-selected {
+  text-decoration: none;
+  background-color: var(--foreground);
+  color: var(--background);
+}
+
+.tab:hover {
+  background-color: var(--foreground);
+  color: var(--background);
+  text-decoration: none;
+  border: none;
+}
+
+.center-horizontal {
+  margin-top: 0.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.align-left {
+  margin-left: 10px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+
+  background-color: var(--debug-colour-1);
+}
+
+.gone {
+  display: none;
+}
+
+/* Close button */
+.close:before {
+  content: 'X';
+}
+
+.close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding-top: 10px;
+  padding-right: 10px;
+  cursor: pointer;
+}
+
+/* Arrangements */
+.column-two {
+  display: flex;
+  justify-content: space-around;
+}
+
+/* Live typing */
+.upper-dialog {
+  border: 5px solid;
+  position: absolute;
+  background-color: var(--background);
+  top: 20%;
+  left: 50%;
+  width: 60%;
+  transform: translate(-50%, -50%);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 5px 5px var(--background-modal-hover);
+}
+
+.cookie-dialog {
+  z-index: 1000;
+  border: 5px solid;
+  position: absolute;
+  background-color: var(--background);
+  bottom: 5%;
+  right: 5%;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 5px 5px var(--background-modal-hover);
+}
+
+.cookie-dialog h1 {
+  font-size: small;
+}
+
+.cookie-dialog p {
+  font-size: small;
+}
+
+.cookie-dialog input {
+  clear: both;
+  float: right;
+}
+
+/* Chips */
+.modal-chip-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+}
+
+.modal-chip {
+  border-radius: 25px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  background: var(--keyboard-background);
+  color: var(--key-shadow);
+}
+
+.modal-chip.activated {
+  border-radius: 25px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  background: var(--key-hold-shadow);
+  color: var(--keyboard-shadow-inset);
+}
+
+#current-key {
+  margin-top: 10px;
+  border: 2px solid var(--background);
+  border-radius: 25px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  font-size: xx-large;
+  text-align: center;
+  margin-left: 80px;
+  margin-right: 80px;
+}
+
+.filter-chip {
+  display: none;
+}
+
+.filter-chip+label {
+  margin-top: 2px;
+  margin-bottom: 2px;
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 50px;
+  color: var(--foreground);
+  text-decoration: none;
+  background-color: var(--background);
+  border: solid 2px var(--foreground);
+  padding: 0.25rem 1rem;
+  display: inline-block;
+  -moz-user-select: -moz-none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  margin-right: 10px;
+}
+
+
+.filter-chip:checked+label {
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+  background-color: var(--background-selected);
+  color: var(--foreground-selected);
+  border-color: var(--foreground-selected);
+}
+
+.filter-chip+label:before {
+  content: '';
+}
+
+.filter-chip:checked+label:before {
+  content: '\2022';
+}
+
+input[type=button] {
+  background-color:var(--background);
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+input[type=button]:hover, input[type=button]:focus {
+  background-color: var(--focus-element);
+}
+
+.live-typing {
+  background-color: var(--background-modal-hover);
+}
+
+.live-typing:before {
+  content: '\00B6\ ';
+}
+
+h2.info {  
+  font-size:large;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+}
+
+.left > * {
+  text-align: left;
+}
+
+.column-two-dictionary {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.dictionary-input {  
+  display: flex;
+  flex-direction: column;
+  width: 50%;
+  align-content: flex-start;
+}
+
+.dictionary-row {  
+  display: flex;  
+  flex-direction: row;  
+  justify-content: space-evenly;  
+  margin-bottom: 5px;  
+}
+
+.dictionary-row :first-child {   
+  width: 50%;    
+  margin-right: 5px;
+}
+.dictionary-row :last-child {
+  width: 50%;
+} 
+
+.pretty-key {
+  border: 1px solid var(--foreground);
+  border-radius: 5px;
+  font-size: xx-large;
+  width: 20%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+.visible-when-connected {
+  visibility: var(--is-connected-visibility);
+  display: var(--is-connected-display);  
+}
+
+.hidden-when-connected {
+  visibility: var(--not-connected-visibility);
+  display: var(--not-connected-display);
+}
+
+.dialog_footer {
+  width: 100%;
+  /* min-height: 50px; */
+  font-size: x-large;
+  font-weight: bolder;
+}

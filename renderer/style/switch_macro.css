@@ -1,0 +1,41 @@
+.switch-row {
+  flex: 1.2;
+  height: 148px;
+  display: flex;
+  flex-direction: row;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.switch-key-container {
+  flex-grow: 1;
+  flex-basis: 0;
+}
+
+.keyboard-row.bottom-row .key.switch-key {
+  height: 115px;
+}
+
+.switch-main {
+  background: var(--switch-main);
+  color: var(--key);
+}
+
+.switch-select {
+  background: var(--switch-select);
+  color: var(--key);
+}
+
+.switch-main:hover {
+  background: var(--switch-main-hover);
+}
+
+.switch-select:hover {
+  background: var(--switch-select-hover);
+}
+
+.switch-selector {
+  width: 100%;
+  text-align: left;
+  border: 1px dashed black;
+}

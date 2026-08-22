@@ -1,0 +1,136 @@
+body {
+    --background: #ffffff;
+    --foreground: #000000;
+    --background-modal: #f9f9f9;
+    --background-modal-hover: #c5c3c3;
+    --invert: 0%;
+    --invert-2: 100%;
+    --focus-element: #7f7f7f;
+
+    --link-highlight: #ff8855;
+
+    --keyboard-shadow-inset: #f1f1f1;
+    --keyboard-shadow: #303038;
+    --keyboard-background: #e3e3e3;
+
+    --key: #3a3a3a;
+    --key-hover:#fbfbfb;
+    --key-background: #f7f7f7;
+    --key-shadow: #7a7a7a;
+    --key-shadow-inset: #aaaaaa;
+    --key-shadow-inset-2: #fff;
+
+    --key-active: #999;
+    --key-active-inset: #aaaaaa;
+    --key-active-inset-2: #fff;
+
+    --key-hold-background: #ababab;
+    --key-hold-shadow: #999;
+    --key-hold-inset: #00aaaa;
+    --key-hold-inset-2: #fff;
+
+    --key-bottom-row-shadow: #7a7a7a;
+    --key-bottom-row-shadow-inset: #aaaaaa;
+    --key-bottom-row-shadow-inset-2: #fff;
+
+    --combination-background: #949496;
+
+    --switch-main:#f7f7f7;
+    --switch-select:#ffcb3d;
+    --switch-main-hover:#fbfbfb;
+    --switch-select-hover:#ba9736;
+
+    --background-selected: #444444;
+    --foreground-selected: #fff;    
+
+    --icon-dim: url(../image/01_dim.svg);
+    --icon-bright: url(../image/02_bright.svg);
+    --icon-windows: url(../image/03_windows.svg);
+    --icon-search: url(../image/04_search.svg);
+    --icon-mic: url(../image/05_mic.svg);
+    --icon-moon: url(../image/06_moon.svg);
+    --icon-rewind: url(../image/07_rewind.svg);
+    --icon-play: url(../image/08_play_pause.svg);
+    --icon-ff: url(../image/09_ff.svg);
+    --icon-mute: url(../image/10_mute.svg);
+    --icon-vol-down: url(../image/11_vol_down.svg);
+    --icon-vol-up: url(../image/12_vol_up.svg);
+    --icon-home: url(../image/home.svg);
+    --icon-lock: url(../image/lock.svg);
+    
+    --icon-accessibility: url(../image/accessibility_border.svg);
+    --icon-volume-mute: url(../image/volume_mute.svg);
+
+    --debug-colour-1: #ff000000;
+    --debug-colour-2: #ff000000;
+    --debug-colour-3: #ff000000;
+
+    --is-connected-visibility: hidden;
+    --is-connected-display: none;
+    --not-connected-visibility: visible;
+    --not-connected-display: inherit;
+}
+
+.device-connected {
+    --is-connected-visibility: visible;
+    --is-connected-display: inherit;
+    --not-connected-visibility: hidden;
+    --not-connected-display: none;
+}
+
+.dark-mode {
+    --background: #000000;
+    --foreground: #ffffff;
+    --background-modal: #393939;
+    --background-modal-hover: #717171;
+    --invert: 100%;
+    --invert-2: 0%;
+    --focus-element: #2e2e2e;
+
+    --key: #c1c1c1;
+    --key-hover:#3f3f3f;
+    --keyboard-background: #4f4f4f;
+    --keyboard-shadow-inset: #000;
+    --keyboard-shadow: #373737;    
+
+    --key-background: #727272;
+
+    --combination-background: #494949;
+
+    --background-selected: #969696;
+    --foreground-selected: #000;
+
+    --switch-main:#727272;
+    --switch-select:#ba9736;
+    --switch-main-hover:#3f3f3f;
+    --switch-select-hover:#8f6829;
+
+    --icon-dim: url(../image/01_dim_dark.svg);
+    --icon-dim: url(../image/01_dim_dark.svg);
+    --icon-bright: url(../image/02_bright_dark.svg);
+    --icon-windows: url(../image/03_windows_dark.svg);
+    --icon-search: url(../image/04_search_dark.svg);
+    --icon-mic: url(../image/05_mic_dark.svg);
+    --icon-moon: url(../image/06_moon_dark.svg);
+    --icon-rewind: url(../image/07_rewind_dark.svg);
+    --icon-play: url(../image/08_play_pause_dark.svg);
+    --icon-ff: url(../image/09_ff_dark.svg);
+    --icon-mute: url(../image/10_mute_dark.svg);
+    --icon-vol-down: url(../image/11_vol_down_dark.svg);
+    --icon-vol-up: url(../image/12_vol_up_dark.svg);
+    --icon-home: url(../image/home_dark.svg);
+    --icon-lock: url(../image/lock_dark.svg);
+
+    --icon-accessibility: url(../image/accessibility_border_dark.svg);
+    --icon-volume-mute: url(../image/volume_mute_dark.svg);
+}
+
+.debug-mode {
+    --debug-colour-1: #f96161;
+    --debug-colour-2: #9ef961;
+    --debug-colour-3: #6191f9;
+}
+
+.inverted {
+    filter: invert(var(--invert));
+}

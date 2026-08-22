@@ -1,0 +1,19 @@
+{
+  "name": "ally-keys-pi-top",
+  "version": "1.0.0",
+  "description": "Ally Keys BLE bridge – Raspberry Pi 4B Electron app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "rebuild": "electron-rebuild -f"
+  },
+  "dependencies": {
+    "@abandonware/bleno": "^0.5.1",
+    "dbus-next": "^0.10.2"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-rebuild": "^3.2.9"
+  }
+}

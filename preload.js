@@ -1,0 +1,15 @@
+'use strict';
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  // Send a keycode command string to BLE (same format as ally-keys wire protocol)
+  sendKeycode: (str) => ipcRenderer.invoke('send-keycode', str),
+
+  // Toggle forwarding for a given HID service (1–4)
+  toggleForward: (hidId) => ipcRenderer.invoke('toggle-forward', hidId),
+
+  // Subscribe to service state updates from the main process
+  onServiceState: (callback) => {
+    ipcRenderer.on('service-state', (_event, state) => callback(state));
+  }
+});
