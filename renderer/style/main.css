@@ -375,3 +375,119 @@ h2.info {
   font-size: x-large;
   font-weight: bolder;
 }
+/* ── Dim overlay ──────────────────────────────────────────────────────────── */
+
+#dim-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  z-index: 9998;   /* above toasts so the whole screen goes dark */
+  cursor: pointer;
+}
+
+#dim-overlay.dim-active {
+  display: block;
+}
+
+/* ── Settings modal ───────────────────────────────────────────────────────── */
+
+#settings-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;   /* above content, below dim overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#settings-modal.sm-hidden {
+  display: none;
+}
+
+.sm-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.sm-dialog {
+  position: relative;
+  z-index: 1;
+  min-width: 280px;
+  border-radius: 18px;
+  padding: 24px 28px 20px;
+  background: var(--key-background, #f7f7f7);
+  border: 1px solid var(--key-border, #ccc);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sm-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--focus-element, #888);
+}
+
+/* Each toggle row */
+.sm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--key-border, #e0e0e0);
+  cursor: pointer;
+  color: var(--key, #3a3a3a);
+}
+
+.sm-row:last-child {
+  border-bottom: none;
+}
+
+.sm-label {
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Toggle switch track */
+.sm-track {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--key-shadow, #ccc);
+  flex-shrink: 0;
+  transition: background 0.22s;
+}
+
+/* Toggle thumb */
+.sm-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  transition: transform 0.22s;
+}
+
+/* Active (on) state */
+.sm-row.sm-on .sm-track {
+  background: #2EBD74;
+}
+
+.sm-row.sm-on .sm-thumb {
+  transform: translateX(22px);
+}
