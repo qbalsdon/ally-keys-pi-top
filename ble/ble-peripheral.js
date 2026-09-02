@@ -8,6 +8,9 @@
 // Both centrals can be connected at the same time (Pi 4 BCM43455 supports
 // multiple LE connections in peripheral mode).
 
+// Pin to hci0 (built-in BCM43455) before bleno reads the env var at require-time.
+// Without this, bleno enumerates adapters and may pick a USB dongle (hci2/hci3).
+if (!process.env.BLENO_HCI_DEVICE_ID) process.env.BLENO_HCI_DEVICE_ID = '0';
 const bleno        = require('@abandonware/bleno');
 const { EventEmitter } = require('events');
 const { HID_DESCRIPTOR }       = require('./hid-descriptor');
