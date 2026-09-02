@@ -65,7 +65,11 @@ class BleManager extends EventEmitter {
     const randomAddr = `C0:FF:AA:BB:CC:D${slotIndex}`;
     const child = fork(workerPath, [], {
       env: { ...process.env, BLENO_HCI_DEVICE_ID: String(hciId), DEVICE_NAME: deviceName,
-             BLENO_RANDOM_ADDRESS: randomAddr },
+             BLENO_RANDOM_ADDRESS: randomAddr,
+             // Override the parent's BLENO_DEVICE_NAME so bleno's built-in
+             // Generic Access Device Name characteristic returns the worker's
+             // own name (e.g. "AK-IOS") instead of "ALLY-KEYS-PI-TOP".
+             BLENO_DEVICE_NAME: deviceName },
     });
 
     const state = { hciId, name: deviceName, process: child, connected: false, forwarding: false };

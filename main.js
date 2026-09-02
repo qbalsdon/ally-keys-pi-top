@@ -46,6 +46,9 @@ async function startBle() {
   });
 
   bleManager.on('keycode-received', (str) => {
+    // Forward the keycode to whichever HID slots have forwarding enabled.
+    bleManager.handleKeycode(str);
+    // Also display it in the renderer UI.
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('keycode-received', str);
     }

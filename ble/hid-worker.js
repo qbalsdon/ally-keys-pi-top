@@ -8,7 +8,7 @@ const { HID_DESCRIPTOR } = require('./hid-descriptor');
 const { parseKeycodeString } = require('./protocol-parser');
 
 const hidId = parseInt(process.env.BLENO_HCI_DEVICE_ID || '1', 10);
-const DEVICE_NAME = `AK-HID-${hidId}`;
+const DEVICE_NAME = process.env.DEVICE_NAME || `AK-HID-${hidId}`;
 const HID_SERVICE_UUID    = '1812';
 const BATTERY_SERVICE_UUID = '180f';
 
@@ -106,7 +106,23 @@ const batteryService = new bleno.PrimaryService({
 // ── BLE lifecycle ─────────────────────────────────────────────────────────────
 
 function advertise() {
-  bleno.startAdvertising(DEVICE_NAME, [HID_SERVICE_UUID], (err) => {
+  // Build an EIR advertisement that includes Appearance=keyboard (0x03C1) so
+  // phones classify the device as a keyboard rather than a generic accessory.
+  const nameBytes = Buffer.from(DEVICE_NAME, 'utf8');
+  const advData = Buffer.concat([
+    Buffer.from([
+      // AD: Flags — LE General Discoverable | BR/EDR Not Supported
+      0x02, 0x01, 0x06,
+      // AD: Complete list of 16-bit UUIDs — HID (0x1812 little-endian)
+      0x03, 0x03, 0x12, 0x18,
+      // AD: Appearance — Keyboard (0x03C1 little-endian)
+      0x03, 0x19, 0xC1, 0x03,
+      // AD: Complete Local Name
+      nameBytes.length + 1, 0x09,
+    ]),
+    nameBytes,
+  ]);
+  bleno.startAdvertisingWithEIRData(advData, Buffer.alloc(0), (err) => {
     if (err) console.error(`[${DEVICE_NAME}] advertise error:`, err);
   });
 }
