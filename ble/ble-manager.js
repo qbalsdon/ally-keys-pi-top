@@ -2,9 +2,12 @@
 // BLE Manager — combined peripheral on hci0 + USB HID workers on BTA-403 dongles.
 //
 // Slot layout:
-//   Slot 1  hci0 (built-in BCM43455)  — BlePeripheral: REC + HID combined
-//   Slot 2  hci? (first USB dongle)   — hid-worker:    AK-ANDROID
-//   Slot 3  hci? (second USB dongle)  — hid-worker:    AK-IOS
+//   Slot 1  hci0 (built-in BCM43455)  — BlePeripheral:      REC + HID (bleno)
+//   Slot 2  hci? (first USB dongle)   — bluez-hid-worker:   AK-ANDROID (bluetoothd D-Bus)
+//   Slot 3  hci? (second USB dongle)  — bluez-hid-worker:   AK-IOS     (bluetoothd D-Bus)
+//
+// The USB dongle workers use bluetoothd's GATT API via dbus-next so that
+// bluetoothd handles SMP/bonding — a requirement for iOS HID (HOGP spec).
 
 const { EventEmitter } = require('events');
 const { execSync }     = require('child_process');
@@ -55,21 +58,18 @@ class BleManager extends EventEmitter {
   // ── Worker lifecycle ─────────────────────────────────────────────────────────
 
   _spawnWorker(slotIndex, hciId, deviceName) {
-    const workerPath = path.join(__dirname, 'hid-worker.js');
-    // Each adapter must advertise with a unique random address.
-    // All three bleno instances inherit BLENO_RANDOM_ADDRESS=C0:FF:AA:BB:CC:D1
-    // from the parent (set in start.sh for hci0).  Without overriding it here,
-    // all USB workers would broadcast the same address as hci0 — phones see
-    // three advertisements from the same address and can only track one device.
-    // Slot 2 → D2, slot 3 → D3 (distinct from hci0's D1).
-    const randomAddr = `C0:FF:AA:BB:CC:D${slotIndex}`;
+    // USB dongles use bluez-hid-worker.js (bluetoothd D-Bus GATT) instead of
+    // the old hid-worker.js (bleno) so that bluetoothd handles SMP/bonding —
+    // required for iOS to accept a BLE HID keyboard.
+    const workerPath = path.join(__dirname, 'bluez-hid-worker.js');
     const child = fork(workerPath, [], {
-      env: { ...process.env, BLENO_HCI_DEVICE_ID: String(hciId), DEVICE_NAME: deviceName,
-             BLENO_RANDOM_ADDRESS: randomAddr,
-             // Override the parent's BLENO_DEVICE_NAME so bleno's built-in
-             // Generic Access Device Name characteristic returns the worker's
-             // own name (e.g. "AK-IOS") instead of "ALLY-KEYS-PI-TOP".
-             BLENO_DEVICE_NAME: deviceName },
+      env: {
+        ...process.env,
+        // HCI_ID is read by bluez-hid-worker.js to select the adapter path
+        // (/org/bluez/hciN) and to keep D-Bus object paths unique per worker.
+        HCI_ID:      String(hciId),
+        DEVICE_NAME: deviceName,
+      },
     });
 
     const state = { hciId, name: deviceName, process: child, connected: false, forwarding: false };
