@@ -39,9 +39,13 @@ function parseKeycodeString(str) {
     if (code >= 0xE0 && code <= 0xE7) {
       // Modifier key – set the corresponding bit in byte 0
       report[0] |= (1 << (code - 0xE0));
-    } else if (!hold && keycodeIndex < 8) {
-      // Regular key code – up to 6 simultaneous keys
-      report[keycodeIndex++] = code & 0xFF;
+    } else if (code > 0 && code <= 0xFF && keycodeIndex < 8) {
+      // Regular key code – include regardless of hold prefix
+      // (livetyping.js sends 'h' on ALL keycodes, not just modifiers)
+      // Skip media/consumer codes (> 0x65) that this descriptor doesn't cover
+      if (code <= 0x65) {
+        report[keycodeIndex++] = code & 0xFF;
+      }
     }
   }
 

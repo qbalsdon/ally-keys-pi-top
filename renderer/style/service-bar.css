@@ -102,9 +102,13 @@ legend.sb-group-label {
   color: var(--text-secondary, #555);
 }
 
-/* Connected HID: green */
-.sb-chip:not(.sb-disconnected):not(.sb-rec-chip) .sb-icon {
-  color: #2EBD74;
+/* Connected HID with forwarding ON: blue glow on keyboard icon */
+.sb-chip.sb-fwd .sb-icon {
+  animation: sb-fwd-pulse 2.2s ease-in-out infinite;
+}
+
+/* Connected HID forwarding OFF (but connected): subtle green glow */
+.sb-chip:not(.sb-disconnected):not(.sb-rec-chip):not(.sb-fwd) .sb-icon {
   animation: sb-glow-pulse 2.2s ease-in-out infinite;
 }
 
@@ -115,8 +119,13 @@ legend.sb-group-label {
 }
 
 @keyframes sb-glow-pulse {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(46, 189, 116, 0.4)); }
-  50%       { filter: drop-shadow(0 0 5px rgba(46, 189, 116, 0.9)); }
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(46, 189, 116, 0.3)); }
+  50%       { filter: drop-shadow(0 0 4px rgba(46, 189, 116, 0.7)); }
+}
+
+@keyframes sb-fwd-pulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(59, 143, 255, 0.4)); }
+  50%       { filter: drop-shadow(0 0 6px rgba(59, 143, 255, 0.9)); }
 }
 
 @keyframes sb-rec-pulse {
@@ -135,15 +144,8 @@ legend.sb-group-label {
   letter-spacing: 0.02em;
 }
 
-/* ── FWD forwarding badge ────────────────────────────────────────────────── */
+/* ── Forwarding-active chip name ─────────────────────────────────────────── */
 
-.sb-fwd-badge {
-  font-size: 9px;
-  background: #3B8FFF;
-  color: #fff;
-  border-radius: 3px;
-  padding: 1px 4px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  margin-left: 1px;
+.sb-chip.sb-fwd .sb-chip-name {
+  color: #dde8ff;
 }

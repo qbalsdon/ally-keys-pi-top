@@ -102,32 +102,13 @@
       </div>
     </fieldset>
 
-    <!-- Group 2: HID devices -->
+    <!-- Group 2: HID keyboard (combined on hci0) -->
     <fieldset class="sb-group">
       <legend class="sb-group-label">HID</legend>
       <div class="sb-chip sb-disconnected" id="sb-hid-1"
-           onclick="toggleForward(1)" title="Tap to toggle forwarding to AK-HID-1">
+           onclick="toggleForward(1)" title="Tap to toggle key forwarding">
         <span class="sb-icon"></span>
         <span class="sb-chip-name">AK-HID-1</span>
-        <span class="sb-fwd-badge" style="display:none">FWD</span>
-      </div>
-      <div class="sb-chip sb-disconnected" id="sb-hid-2"
-           onclick="toggleForward(2)" title="Tap to toggle forwarding to AK-HID-2">
-        <span class="sb-icon"></span>
-        <span class="sb-chip-name">AK-HID-2</span>
-        <span class="sb-fwd-badge" style="display:none">FWD</span>
-      </div>
-      <div class="sb-chip sb-disconnected" id="sb-hid-3"
-           onclick="toggleForward(3)" title="Tap to toggle forwarding to AK-HID-3">
-        <span class="sb-icon"></span>
-        <span class="sb-chip-name">AK-HID-3</span>
-        <span class="sb-fwd-badge" style="display:none">FWD</span>
-      </div>
-      <div class="sb-chip sb-disconnected" id="sb-hid-4"
-           onclick="toggleForward(4)" title="Tap to toggle forwarding to AK-HID-4">
-        <span class="sb-icon"></span>
-        <span class="sb-chip-name">AK-HID-4</span>
-        <span class="sb-fwd-badge" style="display:none">FWD</span>
       </div>
     </fieldset>
   </div>
@@ -148,6 +129,23 @@
         <span class="sm-label">Dim screen</span>
         <span class="sm-track"><span class="sm-thumb"></span></span>
       </button>
+      <button class="sm-row sm-shutdown" onclick="confirmShutdown();">
+        <span class="sm-label">Shut down Pi</span>
+        <span class="sm-shutdown-icon">⏻</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Shutdown confirmation dialog ─────────────────────────────────────── -->
+  <div id="shutdown-modal" class="sm-hidden">
+    <div class="sm-backdrop" onclick="cancelShutdown();"></div>
+    <div class="sm-dialog sm-dialog--confirm">
+      <h3 class="sm-title">Shut down Pi?</h3>
+      <p class="sm-confirm-body">The Pi will power off. You'll need to unplug and re-plug it to restart.</p>
+      <div class="sm-confirm-actions">
+        <button class="sm-btn sm-btn--cancel"  onclick="cancelShutdown();">Cancel</button>
+        <button class="sm-btn sm-btn--danger"  onclick="doShutdown();">Shut down</button>
+      </div>
     </div>
   </div>
 

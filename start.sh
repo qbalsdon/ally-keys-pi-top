@@ -20,11 +20,21 @@ export NVM_DIR="$HOME/.nvm"
 
 # ── Bring up Bluetooth adapters ──────────────────────────────────────────────
 echo "🔵  Bringing up Bluetooth adapters…"
+# Stop bluetoothd so it doesn't conflict with bleno on hci0.
+# bluetoothd running alongside bleno causes:
+#   - Classic BT hostname ("pi-desk") to override our BLE device name
+#   - bluetoothd intercepting HID connections before bleno can handle them
+#   - Possible GATT server conflicts that prevent iOS from pairing as HID
+sudo systemctl stop bluetooth 2>/dev/null || true
+sleep 0.5
 # Unblock any rfkill soft-block first (no password needed via sudoers.d/ally-keys-bt)
 sudo rfkill unblock bluetooth 2>/dev/null || true
 for i in 0 1 2 3 4; do
   if sudo hciconfig "hci${i}" up 2>/dev/null; then
     echo "    hci${i}  ✔"
+    # Disable Classic BT inquiry + page scan so iOS doesn't see "pi-desk"
+    # from the same MAC and ignore our BLE advertisement.
+    sudo hciconfig "hci${i}" noscan 2>/dev/null || true
   fi
 done
 echo ""
@@ -39,6 +49,23 @@ if command -v xset &>/dev/null; then
   xset -dpms
 fi
 
+# ── BLE identity ─────────────────────────────────────────────────────────────
+# Give the BLE peripheral a fixed static random LE address, distinct from the
+# Pi's Classic-BT public MAC (E4:5F:01:05:21:B1).  iOS caches that public MAC
+# as "pi-desk" (Classic BT) and ignores BLE advertisements from the same MAC.
+# A static random address (top byte ≥ 0xC0 — top 2 bits = 11) makes iOS see
+# ALLY-KEYS-PI-TOP as a fresh, separate device in Settings → Bluetooth.
+#
+# This value is consumed by our bleno hci.js patch, NOT by vanilla bleno.
+# (BLENO_DEVICE_ADDRESS is not a real bleno env var; BLENO_RANDOM_ADDRESS is
+# our own addition applied via the patched setRandomAddress() / setAdvertisingParameters().)
+export BLENO_RANDOM_ADDRESS="C0:FF:AA:BB:CC:D1"
+# bleno's built-in GATT Generic Access service (0x1800) uses this env var for
+# the Device Name characteristic (0x2A00).  Without it, bleno falls back to
+# os.hostname() which returns "pi-desk" — the Pi's Linux hostname — and iOS
+# reads that from GATT after connecting, overriding the BLE advertising name.
+export BLENO_DEVICE_NAME="ALLY-KEYS-PI-TOP"
+
 # ── Launch Electron ──────────────────────────────────────────────────────────
 cd "${APP_DIR}"
 
@@ -50,6 +77,7 @@ else
   npx electron . \
     --kiosk \
     --no-sandbox \
+    --disable-gpu \
     --disable-infobars \
     --disable-pinch \
     --overscroll-history-navigation=0

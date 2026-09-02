@@ -55,6 +55,22 @@ function closeSettings() {
   if (modal) modal.classList.add('sm-hidden');
 }
 
+function confirmShutdown() {
+  closeSettings();
+  const modal = document.getElementById('shutdown-modal');
+  if (modal) modal.classList.remove('sm-hidden');
+}
+
+function cancelShutdown() {
+  const modal = document.getElementById('shutdown-modal');
+  if (modal) modal.classList.add('sm-hidden');
+}
+
+function doShutdown() {
+  cancelShutdown();
+  window.electronAPI.shutdown();
+}
+
 // ── Apply saved theme immediately — before any other script runs.
 // Falls back to 'dark' so the kiosk boots into dark mode by default.
 (function restoreTheme() {

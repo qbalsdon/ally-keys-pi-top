@@ -491,3 +491,72 @@ h2.info {
 .sm-row.sm-on .sm-thumb {
   transform: translateX(22px);
 }
+
+/* Shutdown button row */
+.sm-shutdown {
+  color: #d03030;
+  font-weight: 600;
+  background: rgba(0, 120, 110, 0.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 4px;
+  border-bottom: none;
+}
+
+.sm-shutdown-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Shutdown confirmation dialog */
+#shutdown-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#shutdown-modal.sm-hidden {
+  display: none;
+}
+
+.sm-dialog--confirm {
+  min-width: 300px;
+  max-width: 360px;
+  text-align: center;
+}
+
+.sm-confirm-body {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--focus-element, #888);
+  line-height: 1.5;
+}
+
+.sm-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.sm-btn {
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sm-btn--cancel {
+  background: var(--key-border, #e0e0e0);
+  color: var(--key, #3a3a3a);
+}
+
+.sm-btn--danger {
+  background: #d03030;
+  color: #fff;
+}

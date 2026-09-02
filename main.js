@@ -1,5 +1,6 @@
 'use strict';
 const { app, BrowserWindow, ipcMain } = require('electron');
+const { exec } = require('child_process');
 const path       = require('path');
 const BleManager = require('./ble/ble-manager');
 
@@ -65,6 +66,12 @@ ipcMain.handle('send-keycode', (_event, str) => {
 
 ipcMain.handle('toggle-forward', (_event, hidId) => {
   bleManager && bleManager.toggleForward(hidId);
+});
+
+ipcMain.handle('shutdown', () => {
+  exec('sudo poweroff', (err) => {
+    if (err) console.error('[main] shutdown error:', err);
+  });
 });
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────

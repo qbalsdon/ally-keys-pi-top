@@ -16,5 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Subscribe to incoming keycode strings from the REC BLE service
   onKeycodeReceived: (callback) => {
     ipcRenderer.on('keycode-received', (_event, str) => callback(str));
-  }
+  },
+
+  // Shut down the Raspberry Pi
+  shutdown: () => ipcRenderer.invoke('shutdown'),
 });
