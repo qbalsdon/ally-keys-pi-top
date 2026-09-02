@@ -55,6 +55,51 @@ function closeSettings() {
   if (modal) modal.classList.add('sm-hidden');
 }
 
+// ── REC restart modal ─────────────────────────────────────────────────────────
+
+function openRecModal() {
+  closeSettings();
+  const modal = document.getElementById('rec-modal');
+  if (!modal) return;
+  // Reset to idle state
+  const status  = document.getElementById('rec-modal-status');
+  const restart = document.getElementById('rec-modal-restart');
+  const cancel  = document.getElementById('rec-modal-cancel');
+  if (status)  status.textContent  = 'Restart the BLE stack if ally-keys.com can\'t find this device.';
+  if (restart) { restart.disabled = false; restart.textContent = 'Restart BLE'; }
+  if (cancel)  { cancel.disabled  = false; cancel.textContent  = 'Close'; }
+  modal.classList.remove('sm-hidden');
+}
+
+function closeRecModal() {
+  const modal = document.getElementById('rec-modal');
+  if (modal) modal.classList.add('sm-hidden');
+}
+
+async function doRestartBle() {
+  const status  = document.getElementById('rec-modal-status');
+  const restart = document.getElementById('rec-modal-restart');
+  const cancel  = document.getElementById('rec-modal-cancel');
+
+  if (restart) { restart.disabled = true;  restart.textContent = 'Restarting…'; }
+  if (cancel)  { cancel.disabled  = true; }
+  if (status)  status.textContent = 'Cycling Bluetooth adapter…';
+
+  try {
+    const result = await window.electronAPI.restartBle();
+    if (status) {
+      status.textContent = result && result.ok
+        ? 'BLE restarted — advertising as ALLY-KEYS-PI-TOP.'
+        : `Restart failed: ${(result && result.error) || 'unknown error'}`;
+    }
+  } catch (err) {
+    if (status) status.textContent = `Error: ${err.message || err}`;
+  } finally {
+    if (restart) { restart.disabled = false; restart.textContent = 'Restart BLE'; }
+    if (cancel)  { cancel.disabled  = false; }
+  }
+}
+
 function confirmShutdown() {
   closeSettings();
   const modal = document.getElementById('shutdown-modal');

@@ -518,7 +518,8 @@ h2.info {
   justify-content: center;
 }
 
-#shutdown-modal.sm-hidden {
+#shutdown-modal.sm-hidden,
+#rec-modal.sm-hidden {
   display: none;
 }
 
@@ -559,4 +560,14 @@ h2.info {
 .sm-btn--danger {
   background: #d03030;
   color: #fff;
+}
+
+.sm-btn--action {
+  background: #3B8FFF;
+  color: #fff;
+}
+
+.sm-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

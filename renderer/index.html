@@ -96,7 +96,9 @@
     <!-- Group 1: REC -->
     <fieldset class="sb-group">
       <legend class="sb-group-label">REC</legend>
-      <div class="sb-chip sb-rec-chip" id="sb-rec" title="BLE receiver — ally-keys.com connects here">
+      <div class="sb-chip sb-rec-chip" id="sb-rec"
+           title="BLE receiver — tap to restart"
+           onclick="openRecModal();">
         <span class="sb-icon"></span>
         <span class="sb-chip-name">ally-keys-REC</span>
       </div>
@@ -145,6 +147,23 @@
       <div class="sm-confirm-actions">
         <button class="sm-btn sm-btn--cancel"  onclick="cancelShutdown();">Cancel</button>
         <button class="sm-btn sm-btn--danger"  onclick="doShutdown();">Shut down</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REC restart modal ────────────────────────────────────────────────── -->
+  <div id="rec-modal" class="sm-hidden">
+    <div class="sm-backdrop" onclick="closeRecModal();"></div>
+    <div class="sm-dialog sm-dialog--confirm">
+      <h3 class="sm-title">BLE Receiver</h3>
+      <p class="sm-confirm-body" id="rec-modal-status">
+        Restart the BLE stack if ally-keys.com can't find this device.
+      </p>
+      <div class="sm-confirm-actions">
+        <button class="sm-btn sm-btn--cancel" id="rec-modal-cancel"
+                onclick="closeRecModal();">Close</button>
+        <button class="sm-btn sm-btn--action" id="rec-modal-restart"
+                onclick="doRestartBle();">Restart BLE</button>
       </div>
     </div>
   </div>

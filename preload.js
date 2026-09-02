@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('keycode-received', (_event, str) => callback(str));
   },
 
+  // Restart the BLE stack (cycles hci0 down/up so bleno re-advertises)
+  restartBle: () => ipcRenderer.invoke('restart-ble'),
+
   // Shut down the Raspberry Pi
   shutdown: () => ipcRenderer.invoke('shutdown'),
 });

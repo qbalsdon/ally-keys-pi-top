@@ -68,6 +68,23 @@ ipcMain.handle('toggle-forward', (_event, hidId) => {
   bleManager && bleManager.toggleForward(hidId);
 });
 
+ipcMain.handle('restart-ble', () => {
+  return new Promise((resolve) => {
+    console.log('[main] restarting BLE — cycling hci0 down/up…');
+    // hciconfig down forces bleno to fire stateChange: poweredOff, then
+    // hciconfig up fires stateChange: poweredOn which triggers _advertise().
+    exec('sudo hciconfig hci0 down && sleep 0.5 && sudo hciconfig hci0 up', (err) => {
+      if (err) {
+        console.error('[main] restart-ble error:', err.message);
+        resolve({ ok: false, error: err.message });
+      } else {
+        console.log('[main] hci0 cycled — bleno will re-advertise');
+        resolve({ ok: true });
+      }
+    });
+  });
+});
+
 ipcMain.handle('shutdown', () => {
   exec('sudo poweroff', (err) => {
     if (err) console.error('[main] shutdown error:', err);
