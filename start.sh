@@ -38,14 +38,6 @@ for i in 0 1 2 3 4; do
   fi
 done
 
-# The BCM43455 (hci0) will broadcast LE advertisements via raw HCI, but it
-# won't ACCEPT incoming LE connections unless the kernel MGMT layer has
-# completed LE initialisation.  btmgmt le on performs that extra step even
-# when bluetoothd is stopped — it talks to the kernel directly.
-echo "🔵  Enabling LE on hci0…"
-sudo btmgmt -i hci0 le on 2>/dev/null || true
-echo ""
-
 # ── Set display (required when launched from autostart / SSH) ────────────────
 export DISPLAY="${DISPLAY:-:0}"
 export XAUTHORITY="${XAUTHORITY:-/home/pi-desk/.Xauthority}"
@@ -75,6 +67,12 @@ export BLENO_DEVICE_NAME="ALLY-KEYS-PI-TOP"
 
 # ── Launch Electron ──────────────────────────────────────────────────────────
 cd "${APP_DIR}"
+
+# bleno sends HCI_Reset on startup which clears MGMT-level LE state.
+# Re-run btmgmt le on in the background ~6 s after electron starts to restore
+# LE connection acceptance on hci0 (BCM43455 quirk: raw HCI commands are enough
+# for advertising but MGMT init is also required for accepting connections).
+(sleep 6 && sudo btmgmt -i hci0 le on 2>/dev/null && echo "🔵  LE re-enabled on hci0 (post-reset)") &
 
 if [[ "${DEV_MODE}" == "--dev" ]]; then
   echo "🚀  Starting ally-keys-pi-top (dev mode)…"
