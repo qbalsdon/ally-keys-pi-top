@@ -78,7 +78,10 @@ function defProps(Klass, specs) {
  * the @method decorator would.  `specs` is { MethodName: {inSignature, outSignature} }.
  */
 function defMethods(Klass, specs) {
-  Klass.prototype.$methods = Klass.prototype.$methods || {};
+  // Use hasOwnProperty so each class gets its own $methods dict (not shared with parent).
+  if (!Object.prototype.hasOwnProperty.call(Klass.prototype, '$methods')) {
+    Klass.prototype.$methods = {};
+  }
   for (const [name, opts] of Object.entries(specs)) {
     Klass.prototype.$methods[name] = {
       name,
@@ -88,6 +91,9 @@ function defMethods(Klass, specs) {
       outSignatureTree: parseSignature(opts.outSignature || ''),
       disabled: false,
       noReply:  false,
+      // Critical: dbus-next handlers.js calls method.fn.apply(iface, args).
+      // Without fn the call throws TypeError and bluetoothd gets a service error.
+      fn: Klass.prototype[name],
     };
   }
 }
@@ -198,44 +204,47 @@ defMethods(LEAdvertisement, {
 // GATT hierarchy.  We return a snapshot of all service/char/descriptor paths
 // with their current property values as Variants.
 
+// Full 128-bit UUID helpers (BlueZ accepts short form but full form is safer)
+function uuid16(id) { return `0000${id}-0000-1000-8000-00805f9b34fb`; }
+
 function buildManagedObjects() {
   return {
     [HID_SVC_PATH]: {
       'org.bluez.GattService1': {
-        UUID:    v('s', '1812'),
+        UUID:    v('s', uuid16('1812')),
         Primary: v('b', true),
       },
     },
     [BATT_SVC_PATH]: {
       'org.bluez.GattService1': {
-        UUID:    v('s', '180f'),
+        UUID:    v('s', uuid16('180f')),
         Primary: v('b', true),
       },
     },
     [CHAR_INFO_PATH]: {
       'org.bluez.GattCharacteristic1': {
-        UUID:    v('s', '2a4a'),
+        UUID:    v('s', uuid16('2a4a')),
         Service: v('o', HID_SVC_PATH),
         Flags:   v('as', ['read']),
       },
     },
     [CHAR_CP_PATH]: {
       'org.bluez.GattCharacteristic1': {
-        UUID:    v('s', '2a4c'),
+        UUID:    v('s', uuid16('2a4c')),
         Service: v('o', HID_SVC_PATH),
         Flags:   v('as', ['write-without-response']),
       },
     },
     [CHAR_MAP_PATH]: {
       'org.bluez.GattCharacteristic1': {
-        UUID:    v('s', '2a4b'),
+        UUID:    v('s', uuid16('2a4b')),
         Service: v('o', HID_SVC_PATH),
         Flags:   v('as', ['read']),
       },
     },
     [CHAR_INPUT_PATH]: {
       'org.bluez.GattCharacteristic1': {
-        UUID:      v('s', '2a4d'),
+        UUID:      v('s', uuid16('2a4d')),
         Service:   v('o', HID_SVC_PATH),
         Flags:     v('as', ['read', 'notify']),
         Notifying: v('b', false),
@@ -243,7 +252,7 @@ function buildManagedObjects() {
     },
     [DESC_REF_PATH]: {
       'org.bluez.GattDescriptor1': {
-        UUID:           v('s', '2908'),
+        UUID:           v('s', uuid16('2908')),
         Characteristic: v('o', CHAR_INPUT_PATH),
         Flags:          v('as', ['read']),
         Value:          v('ay', [0x00, 0x01]),
@@ -251,7 +260,7 @@ function buildManagedObjects() {
     },
     [CHAR_BATT_PATH]: {
       'org.bluez.GattCharacteristic1': {
-        UUID:    v('s', '2a19'),
+        UUID:    v('s', uuid16('2a19')),
         Service: v('o', BATT_SVC_PATH),
         Flags:   v('as', ['read']),
       },
@@ -271,25 +280,25 @@ defMethods(ObjectManager, {
 
 class HidInfoChar extends GattChar {
   constructor() {
-    super('2a4a', ['read'], HID_SVC_PATH);
+    super(uuid16('2a4a'), ['read'], HID_SVC_PATH);
     this._value = Buffer.from([0x11, 0x01, 0x00, 0x03]); // bcdHID 1.11, country 0, RemoteWake+NormallyConnectable
   }
 }
 
 class HidCpChar extends GattChar {
-  constructor() { super('2a4c', ['write-without-response'], HID_SVC_PATH); }
+  constructor() { super(uuid16('2a4c'), ['write-without-response'], HID_SVC_PATH); }
 }
 
 class ReportMapChar extends GattChar {
   constructor() {
-    super('2a4b', ['read'], HID_SVC_PATH);
+    super(uuid16('2a4b'), ['read'], HID_SVC_PATH);
     this._value = HID_DESCRIPTOR;
   }
 }
 
 class InputReportChar extends GattChar {
   constructor() {
-    super('2a4d', ['read', 'notify'], HID_SVC_PATH);
+    super(uuid16('2a4d'), ['read', 'notify'], HID_SVC_PATH);
     this._value = Buffer.alloc(8);
   }
 
@@ -314,7 +323,7 @@ class InputReportChar extends GattChar {
 
 class BattLevelChar extends GattChar {
   constructor() {
-    super('2a19', ['read'], BATT_SVC_PATH);
+    super(uuid16('2a19'), ['read'], BATT_SVC_PATH);
     this._value = Buffer.from([0x64]); // 100%
   }
 }
@@ -323,7 +332,7 @@ const hidInfoChar  = new HidInfoChar();
 const hidCpChar    = new HidCpChar();
 const reportMapChar = new ReportMapChar();
 const inputReport  = new InputReportChar();
-const reportRefDesc = new GattDesc('2908', CHAR_INPUT_PATH, Buffer.from([0x00, 0x01]));
+const reportRefDesc = new GattDesc(uuid16('2908'), CHAR_INPUT_PATH, Buffer.from([0x00, 0x01]));
 const battLevelChar = new BattLevelChar();
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -335,8 +344,8 @@ async function main() {
   // bluetoothd will call GetManagedObjects on APP_ROOT to discover the hierarchy,
   // then call ReadValue/StartNotify/etc on the characteristic paths directly.
   bus.export(APP_ROOT,        new ObjectManager());
-  bus.export(HID_SVC_PATH,    new GattService('1812'));
-  bus.export(BATT_SVC_PATH,   new GattService('180f'));
+  bus.export(HID_SVC_PATH,    new GattService('00001812-0000-1000-8000-00805f9b34fb'));
+  bus.export(BATT_SVC_PATH,   new GattService('0000180f-0000-1000-8000-00805f9b34fb'));
   bus.export(CHAR_INFO_PATH,  hidInfoChar);
   bus.export(CHAR_CP_PATH,    hidCpChar);
   bus.export(CHAR_MAP_PATH,   reportMapChar);
@@ -345,19 +354,18 @@ async function main() {
   bus.export(CHAR_BATT_PATH,  battLevelChar);
   bus.export(ADV_PATH,        new LEAdvertisement());
 
-  // Get bluetoothd proxy objects for this adapter
-  let adapter;
+  // ── Step 1: power on the adapter ─────────────────────────────────────────
+  // GattManager1 and LEAdvertisingManager1 only appear in the proxy after the
+  // adapter is powered on.  Fetch with Properties first, then re-fetch the
+  // full proxy after powering on.
+  let adapterBasic;
   try {
-    adapter = await bus.getProxyObject(BLUEZ, ADAPTER_PATH);
+    adapterBasic = await bus.getProxyObject(BLUEZ, ADAPTER_PATH);
   } catch (err) {
     throw new Error(`hci${HCI_ID} not found in bluetoothd — is bluetoothd running? (${err.message})`);
   }
 
-  const gattMgr      = adapter.getInterface('org.bluez.GattManager1');
-  const advMgr       = adapter.getInterface('org.bluez.LEAdvertisingManager1');
-  const adapterProps = adapter.getInterface('org.freedesktop.DBus.Properties');
-
-  // Power on the adapter (bluetoothd's job; with AutoEnable=false we do it explicitly)
+  const adapterProps = adapterBasic.getInterface('org.freedesktop.DBus.Properties');
   try {
     await adapterProps.Set('org.bluez.Adapter1', 'Powered', v('b', true));
     console.log(`[${DEVICE_NAME}] hci${HCI_ID} powered on`);
@@ -365,13 +373,23 @@ async function main() {
     console.warn(`[${DEVICE_NAME}] could not power on hci${HCI_ID} (may already be on): ${err.message}`);
   }
 
-  // RegisterApplication: bluetoothd calls GetManagedObjects on our APP_ROOT path
-  // using our D-Bus bus name and builds the GATT database from our objects.
+  // Give the adapter a moment to finish initialising after power-on before
+  // fetching GattManager1 / LEAdvertisingManager1 (they appear asynchronously).
+  await new Promise(r => setTimeout(r, 1500));
+
+  // ── Step 2: re-fetch proxy so GattManager1 / LEAdvertisingManager1 show up ─
+  const adapter = await bus.getProxyObject(BLUEZ, ADAPTER_PATH);
+  const gattMgr = adapter.getInterface('org.bluez.GattManager1');
+  const advMgr  = adapter.getInterface('org.bluez.LEAdvertisingManager1');
+
+  // ── Step 3: register GATT application ────────────────────────────────────
+  // bluetoothd calls GetManagedObjects on our APP_ROOT using our D-Bus bus
+  // name and builds the GATT database from the returned objects.
   await gattMgr.RegisterApplication(APP_ROOT, {});
   console.log(`[${DEVICE_NAME}] GATT application registered on ${ADAPTER_PATH}`);
 
-  // RegisterAdvertisement: bluetoothd reads our LEAdvertisement1 props and
-  // starts broadcasting. Properties: Type, ServiceUUIDs, Appearance, LocalName.
+  // ── Step 4: register advertisement ───────────────────────────────────────
+  // bluetoothd reads our LEAdvertisement1 properties and starts broadcasting.
   await advMgr.RegisterAdvertisement(ADV_PATH, {});
   console.log(`[${DEVICE_NAME}] advertising as "${DEVICE_NAME}" on hci${HCI_ID}`);
 }
